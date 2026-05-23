@@ -19,6 +19,7 @@ import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as ApiPublicWebhooksPayheroRouteImport } from './routes/api/public/webhooks/payhero'
 
 const RegisterRoute = RegisterRouteImport.update({
@@ -71,6 +72,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const ApiPublicWebhooksPayheroRoute =
   ApiPublicWebhooksPayheroRouteImport.update({
     id: '/api/public/webhooks/payhero',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/analytics'
     | '/dashboard'
     | '/history'
     | '/onboarding'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/analytics'
     | '/dashboard'
     | '/history'
     | '/onboarding'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/register'
+    | '/_authenticated/analytics'
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
     | '/_authenticated/onboarding'
@@ -236,6 +248,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/api/public/webhooks/payhero': {
       id: '/api/public/webhooks/payhero'
       path: '/api/public/webhooks/payhero'
@@ -247,6 +266,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -256,6 +276,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
@@ -278,3 +299,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
