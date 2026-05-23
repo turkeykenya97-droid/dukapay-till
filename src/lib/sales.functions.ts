@@ -9,18 +9,22 @@ const phoneSchema = z
   .trim()
   .regex(/^(\+?254|0)\d{9}$/, "Enter a valid Kenyan phone number");
 
+const itemSchema = z.union([
+  z.object({
+    product_id: z.string().uuid(),
+    quantity: z.number().int().positive().max(10000),
+  }),
+  z.object({
+    name: z.string().trim().min(1).max(120),
+    unit_price: z.number().positive().max(1_000_000),
+    quantity: z.number().int().positive().max(10000),
+  }),
+]);
+
 const createSaleSchema = z.object({
   customer_phone: phoneSchema,
   cash_paid: z.number().min(0).max(1_000_000).optional().default(0),
-  items: z
-    .array(
-      z.object({
-        product_id: z.string().uuid(),
-        quantity: z.number().int().positive().max(10000),
-      })
-    )
-    .min(1)
-    .max(50),
+  items: z.array(itemSchema).min(1).max(50),
 });
 
 const saleIdSchema = z.object({ id: z.string().uuid() });
