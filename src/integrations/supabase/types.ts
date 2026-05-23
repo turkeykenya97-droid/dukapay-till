@@ -102,9 +102,11 @@ export type Database = {
       }
       sales: {
         Row: {
+          cash_paid: number
           created_at: string
           customer_phone: string
           id: string
+          mpesa_amount: number | null
           payhero_checkout_request_id: string | null
           payhero_reference: string | null
           payment_status: string
@@ -113,9 +115,11 @@ export type Database = {
           total_amount: number
         }
         Insert: {
+          cash_paid?: number
           created_at?: string
           customer_phone: string
           id?: string
+          mpesa_amount?: number | null
           payhero_checkout_request_id?: string | null
           payhero_reference?: string | null
           payment_status?: string
@@ -124,9 +128,11 @@ export type Database = {
           total_amount: number
         }
         Update: {
+          cash_paid?: number
           created_at?: string
           customer_phone?: string
           id?: string
+          mpesa_amount?: number | null
           payhero_checkout_request_id?: string | null
           payhero_reference?: string | null
           payment_status?: string
