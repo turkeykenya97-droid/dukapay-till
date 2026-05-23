@@ -414,7 +414,7 @@ function InventoryPane({
   setSearch,
   onAdd,
 }: {
-  products: { id: string; name: string; price: number; stock: number }[];
+  products: Array<{ id: string; name: string; price: number; stock: number } & Record<string, unknown>>;
   search: string;
   setSearch: (s: string) => void;
   onAdd: (p: { id: string; name: string; price: number; stock: number }) => void;
