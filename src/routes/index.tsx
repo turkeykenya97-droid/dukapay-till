@@ -1,26 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getCurrentShop } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  beforeLoad: async () => {
+    const shop = await getCurrentShop();
+    if (!shop) throw redirect({ to: "/login" });
+    if (shop.needs_onboarding) throw redirect({ to: "/onboarding" });
+    throw redirect({ to: "/dashboard" });
+  },
 });
-
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
-
-function Index() {
-  return <PlaceholderIndex />;
-}
