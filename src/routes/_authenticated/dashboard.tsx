@@ -11,6 +11,7 @@ import { ShoppingCart, AlertTriangle, TrendingUp, Receipt } from "lucide-react";
 const dashboardQuery = queryOptions({
   queryKey: ["dashboard"],
   queryFn: () => getDashboard(),
+  staleTime: 30 * 1000,
 });
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
