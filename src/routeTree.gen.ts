@@ -9,13 +9,67 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
+import { Route as AuthenticatedSellRouteImport } from './routes/_authenticated/sell'
+import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as ApiPublicWebhooksPayheroRouteImport } from './routes/api/public/webhooks/payhero'
 
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSubscriptionRoute =
+  AuthenticatedSubscriptionRouteImport.update({
+    id: '/subscription',
+    path: '/subscription',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSellRoute = AuthenticatedSellRouteImport.update({
+  id: '/sell',
+  path: '/sell',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedProductsRoute = AuthenticatedProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const ApiPublicWebhooksPayheroRoute =
   ApiPublicWebhooksPayheroRouteImport.update({
@@ -26,38 +80,161 @@ const ApiPublicWebhooksPayheroRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/history': typeof AuthenticatedHistoryRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/products': typeof AuthenticatedProductsRoute
+  '/sell': typeof AuthenticatedSellRoute
+  '/subscription': typeof AuthenticatedSubscriptionRoute
   '/api/public/webhooks/payhero': typeof ApiPublicWebhooksPayheroRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/history': typeof AuthenticatedHistoryRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/products': typeof AuthenticatedProductsRoute
+  '/sell': typeof AuthenticatedSellRoute
+  '/subscription': typeof AuthenticatedSubscriptionRoute
   '/api/public/webhooks/payhero': typeof ApiPublicWebhooksPayheroRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/history': typeof AuthenticatedHistoryRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/products': typeof AuthenticatedProductsRoute
+  '/_authenticated/sell': typeof AuthenticatedSellRoute
+  '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/api/public/webhooks/payhero': typeof ApiPublicWebhooksPayheroRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/webhooks/payhero'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/dashboard'
+    | '/history'
+    | '/onboarding'
+    | '/products'
+    | '/sell'
+    | '/subscription'
+    | '/api/public/webhooks/payhero'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/webhooks/payhero'
-  id: '__root__' | '/' | '/api/public/webhooks/payhero'
+  to:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/dashboard'
+    | '/history'
+    | '/onboarding'
+    | '/products'
+    | '/sell'
+    | '/subscription'
+    | '/api/public/webhooks/payhero'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/login'
+    | '/register'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/history'
+    | '/_authenticated/onboarding'
+    | '/_authenticated/products'
+    | '/_authenticated/sell'
+    | '/_authenticated/subscription'
+    | '/api/public/webhooks/payhero'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
   ApiPublicWebhooksPayheroRoute: typeof ApiPublicWebhooksPayheroRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/subscription': {
+      id: '/_authenticated/subscription'
+      path: '/subscription'
+      fullPath: '/subscription'
+      preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/sell': {
+      id: '/_authenticated/sell'
+      path: '/sell'
+      fullPath: '/sell'
+      preLoaderRoute: typeof AuthenticatedSellRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/products': {
+      id: '/_authenticated/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof AuthenticatedProductsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/history': {
+      id: '/_authenticated/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/api/public/webhooks/payhero': {
       id: '/api/public/webhooks/payhero'
@@ -69,10 +246,45 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
+  AuthenticatedSellRoute: typeof AuthenticatedSellRoute
+  AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedProductsRoute: AuthenticatedProductsRoute,
+  AuthenticatedSellRoute: AuthenticatedSellRoute,
+  AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
   ApiPublicWebhooksPayheroRoute: ApiPublicWebhooksPayheroRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
