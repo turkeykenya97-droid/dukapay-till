@@ -35,12 +35,16 @@ import {
   Package,
   ChevronDown,
   Wallet,
+  Zap,
+  Calculator as CalculatorIcon,
+  X,
 } from "lucide-react";
 import { fmtKsh } from "@/lib/format";
 
 const productsQuery = queryOptions({
   queryKey: ["products"],
   queryFn: () => listProducts(),
+  staleTime: 2 * 60 * 1000,
 });
 
 export const Route = createFileRoute("/_authenticated/sell")({
@@ -49,13 +53,18 @@ export const Route = createFileRoute("/_authenticated/sell")({
   component: SellPage,
 });
 
-interface CartItem {
-  product_id: string;
+const M_PESA_MAX = 150_000;
+
+type CartItem = {
+  key: string;
+  product_id: string | null;
   name: string;
   unit_price: number;
-  stock: number;
   quantity: number;
-}
+  stock?: number;
+};
+
+type Tab = "inventory" | "quick" | "calc";
 
 function SellPage() {
   const navigate = useNavigate();
@@ -67,6 +76,7 @@ function SellPage() {
   const cancel = useServerFn(cancelSale);
   const shopFn = useServerFn(getCurrentShop);
 
+  const [tab, setTab] = useState<Tab>("inventory");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [phone, setPhone] = useState("");
   const [search, setSearch] = useState("");
@@ -96,6 +106,7 @@ function SellPage() {
           qc.invalidateQueries({ queryKey: ["products"] });
           qc.invalidateQueries({ queryKey: ["dashboard"] });
           qc.invalidateQueries({ queryKey: ["analytics"] });
+          qc.invalidateQueries({ queryKey: ["history"] });
         }
       }
       return s;
@@ -116,11 +127,11 @@ function SellPage() {
     return products.filter((p) => p.name.toLowerCase().includes(q));
   }, [products, search]);
 
-  const addItem = (p: (typeof products)[number]) => {
+  const addInventoryItem = (p: { id: string; name: string; price: number; stock: number }) => {
     setCart((c) => {
       const existing = c.find((i) => i.product_id === p.id);
       if (existing) {
-        if (existing.quantity >= p.stock) {
+        if (existing.stock !== undefined && existing.quantity >= existing.stock) {
           toast.error("No more stock");
           return c;
         }
@@ -135,6 +146,7 @@ function SellPage() {
       return [
         ...c,
         {
+          key: `inv-${p.id}`,
           product_id: p.id,
           name: p.name,
           unit_price: Number(p.price),
@@ -145,15 +157,37 @@ function SellPage() {
     });
   };
 
-  const setQty = (id: string, q: number) => {
+  const addManualItem = (name: string, price: number) => {
+    if (price <= 0) return;
+    if (total + price > M_PESA_MAX) {
+      toast.error(`Max ${fmtKsh(M_PESA_MAX)} per sale`);
+      return;
+    }
+    setCart((c) => [
+      ...c,
+      {
+        key: `man-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        product_id: null,
+        name,
+        unit_price: price,
+        quantity: 1,
+      },
+    ]);
+  };
+
+  const setQty = (key: string, q: number) => {
     setCart((c) =>
       q <= 0
-        ? c.filter((i) => i.product_id !== id)
+        ? c.filter((i) => i.key !== key)
         : c.map((i) =>
-            i.product_id === id ? { ...i, quantity: Math.min(q, i.stock) } : i
+            i.key === key
+              ? { ...i, quantity: i.stock !== undefined ? Math.min(q, i.stock) : q }
+              : i
           )
     );
   };
+
+  const removeItem = (key: string) => setCart((c) => c.filter((i) => i.key !== key));
 
   const submitPin = async () => {
     try {
@@ -170,6 +204,7 @@ function SellPage() {
     if (cart.length === 0) return toast.error("Add at least one item");
     if (!/^(\+?254|0)\d{9}$/.test(phone.replace(/\s+/g, "")))
       return toast.error("Enter a valid Kenyan phone");
+    if (total > M_PESA_MAX) return toast.error(`Max ${fmtKsh(M_PESA_MAX)}`);
     if (cashNum >= total)
       return toast.error("Cash covers full amount — no M-Pesa needed");
     setSubmitting(true);
@@ -178,21 +213,19 @@ function SellPage() {
         data: {
           customer_phone: phone,
           cash_paid: cashNum,
-          items: cart.map((i) => ({
-            product_id: i.product_id,
-            quantity: i.quantity,
-          })),
+          items: cart.map((i) =>
+            i.product_id
+              ? { product_id: i.product_id, quantity: i.quantity }
+              : { name: i.name, unit_price: i.unit_price, quantity: i.quantity }
+          ),
         },
       });
       setPendingSaleId(res.sale_id);
       toast.success(`M-Pesa request for ${fmtKsh(res.mpesa_amount)} sent`);
     } catch (e) {
       const msg = (e as Error).message;
-      if (msg === "PIN_REQUIRED") {
-        setPinOpen(true);
-      } else {
-        toast.error(msg);
-      }
+      if (msg === "PIN_REQUIRED") setPinOpen(true);
+      else toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -212,7 +245,6 @@ function SellPage() {
       try {
         await cancel({ data: { id: pendingSaleId } });
       } catch (e) {
-        // Already settled is fine; just toast on real errors
         const msg = (e as Error).message;
         if (!msg.includes("Completed")) toast.error(msg);
       }
@@ -221,7 +253,6 @@ function SellPage() {
     resetSale();
   };
 
-  // Result screens
   if (finalStatus === "completed") {
     return (
       <ResultScreen
@@ -276,60 +307,64 @@ function SellPage() {
     );
   }
 
+  const tabs: { id: Tab; label: string; icon: typeof Package }[] = [
+    { id: "inventory", label: "Inventory", icon: Package },
+    { id: "quick", label: "Quick", icon: Zap },
+    { id: "calc", label: "Calc", icon: CalculatorIcon },
+  ];
+
   return (
     <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-72 lg:pb-6">
       <h1 className="text-2xl font-bold mb-4">New sale</h1>
 
-      <div className="lg:grid lg:grid-cols-5 lg:gap-6">
-        {/* Product list */}
-        <div className="lg:col-span-3">
-          <div className="relative mb-3">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search products…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+      <div className="flex gap-2 mb-4 bg-muted p-1 rounded-xl w-fit">
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                active
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {t.label}
+              {cart.length > 0 && t.id === tab && (
+                <span className="ml-1 text-[10px] bg-white/20 px-1.5 rounded-full">
+                  {cart.reduce((s, i) => s + i.quantity, 0)}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
-          {filteredProducts.length === 0 ? (
-            <div className="text-center py-12 bg-card border border-border rounded-2xl">
-              <Package className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">
-                {search
-                  ? `No products found matching "${search}"`
-                  : "No products yet. Add some on the Products page."}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2 sm:grid sm:grid-cols-2 sm:gap-2 sm:space-y-0">
-              {filteredProducts.map((p) => {
-                const out = p.stock < 1;
-                return (
-                  <button
-                    key={p.id}
-                    disabled={out}
-                    onClick={() => addItem(p)}
-                    className={`w-full text-left bg-card border border-border rounded-xl p-3 flex items-center gap-3 transition ${
-                      out ? "opacity-50" : "hover:border-primary"
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{p.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {fmtKsh(p.price)} · {out ? "Out of stock" : `${p.stock} in stock`}
-                      </div>
-                    </div>
-                    <Plus className="h-5 w-5 text-primary shrink-0" />
-                  </button>
-                );
-              })}
-            </div>
+      <div className="lg:grid lg:grid-cols-5 lg:gap-6">
+        <div className="lg:col-span-3">
+          {tab === "inventory" && (
+            <InventoryPane
+              products={filteredProducts}
+              search={search}
+              setSearch={setSearch}
+              onAdd={addInventoryItem}
+            />
+          )}
+          {tab === "quick" && <QuickPane onAdd={addManualItem} />}
+          {tab === "calc" && (
+            <CalculatorPane
+              cart={cart}
+              total={total}
+              onAdd={(amount) => addManualItem("Calculator Entry", amount)}
+              onClearAll={() => setCart((c) => c.filter((i) => i.name !== "Calculator Entry"))}
+              onRemove={removeItem}
+            />
           )}
         </div>
 
-        {/* Cart */}
         {cart.length > 0 && (
           <CartPanel
             cart={cart}
@@ -337,6 +372,7 @@ function SellPage() {
             phone={phone}
             setPhone={setPhone}
             setQty={setQty}
+            removeItem={removeItem}
             cashOpen={cashOpen}
             setCashOpen={setCashOpen}
             cashPaid={cashPaid}
@@ -372,12 +408,239 @@ function SellPage() {
   );
 }
 
+function InventoryPane({
+  products,
+  search,
+  setSearch,
+  onAdd,
+}: {
+  products: Array<{ id: string; name: string; price: number; stock: number } & Record<string, unknown>>;
+  search: string;
+  setSearch: (s: string) => void;
+  onAdd: (p: { id: string; name: string; price: number; stock: number }) => void;
+}) {
+  return (
+    <>
+      <div className="relative mb-3">
+        <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search products…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {products.length === 0 ? (
+        <div className="text-center py-12 bg-card border border-border rounded-2xl">
+          <Package className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">
+            {search
+              ? `No products found matching "${search}"`
+              : "No products yet. Add some on the Products page."}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2 sm:grid sm:grid-cols-2 sm:gap-2 sm:space-y-0">
+          {products.map((p) => {
+            const out = p.stock < 1;
+            return (
+              <button
+                key={p.id}
+                disabled={out}
+                onClick={() => onAdd(p)}
+                className={`w-full text-left bg-card border border-border rounded-xl p-3 flex items-center gap-3 transition ${
+                  out ? "opacity-50" : "hover:border-primary"
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{p.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {fmtKsh(p.price)} · {out ? "Out of stock" : `${p.stock} in stock`}
+                  </div>
+                </div>
+                <Plus className="h-5 w-5 text-primary shrink-0" />
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+function QuickPane({ onAdd }: { onAdd: (name: string, price: number) => void }) {
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+
+  const submit = () => {
+    const n = name.trim() || "Quick Sale";
+    const p = Number(price);
+    if (!p || p <= 0) return toast.error("Enter a valid price");
+    onAdd(n, p);
+    setName("");
+    setPrice("");
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+      <h2 className="font-semibold">Quick sale</h2>
+      <p className="text-sm text-muted-foreground">
+        Add a one-off item without saving to inventory.
+      </p>
+      <div className="space-y-2">
+        <Label htmlFor="qs-name">Item name (optional)</Label>
+        <Input
+          id="qs-name"
+          placeholder="e.g. Soda"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="qs-price">Price (Ksh)</Label>
+        <Input
+          id="qs-price"
+          type="number"
+          inputMode="decimal"
+          placeholder="0"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+        />
+      </div>
+      <Button className="w-full" onClick={submit}>
+        <Plus className="h-4 w-4" /> Add to cart
+      </Button>
+    </div>
+  );
+}
+
+function CalculatorPane({
+  cart,
+  total,
+  onAdd,
+  onClearAll,
+  onRemove,
+}: {
+  cart: CartItem[];
+  total: number;
+  onAdd: (amount: number) => void;
+  onClearAll: () => void;
+  onRemove: (key: string) => void;
+}) {
+  const [display, setDisplay] = useState("");
+  const calcEntries = cart.filter((i) => i.name === "Calculator Entry");
+
+  const press = (k: string) => {
+    if (k === "C") {
+      setDisplay("");
+      onClearAll();
+      return;
+    }
+    if (k === "⌫") {
+      setDisplay((d) => d.slice(0, -1));
+      return;
+    }
+    if (k === "+") {
+      const v = Number(display);
+      if (!v || v <= 0) return;
+      onAdd(Math.round(v * 100) / 100);
+      setDisplay("");
+      return;
+    }
+    if (k === "=") {
+      const v = Number(display);
+      if (v > 0) {
+        onAdd(Math.round(v * 100) / 100);
+        setDisplay("");
+      }
+      return;
+    }
+    if (k === ".") {
+      if (display.includes(".")) return;
+      setDisplay((d) => (d === "" ? "0." : d + "."));
+      return;
+    }
+    // digit
+    setDisplay((d) => {
+      const next = (d + k).replace(/^0(?=\d)/, "");
+      if (Number(next) > M_PESA_MAX) return d;
+      return next;
+    });
+  };
+
+  const keys: { label: string; cls: string }[] = [
+    { label: "1", cls: "bg-background" },
+    { label: "2", cls: "bg-background" },
+    { label: "3", cls: "bg-background" },
+    { label: "+", cls: "bg-primary text-primary-foreground" },
+    { label: "4", cls: "bg-background" },
+    { label: "5", cls: "bg-background" },
+    { label: "6", cls: "bg-background" },
+    { label: "⌫", cls: "bg-muted" },
+    { label: "7", cls: "bg-background" },
+    { label: "8", cls: "bg-background" },
+    { label: "9", cls: "bg-background" },
+    { label: "C", cls: "bg-destructive text-destructive-foreground" },
+    { label: ".", cls: "bg-background" },
+    { label: "0", cls: "bg-background" },
+    { label: "=", cls: "bg-primary text-primary-foreground col-span-2" },
+  ];
+
+  return (
+    <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+      <div className="text-center">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground">Total</div>
+        <div className="text-4xl font-bold tabular-nums">{fmtKsh(total)}</div>
+      </div>
+
+      <div className="bg-muted/50 rounded-xl p-3 min-h-[60px]">
+        <div className="text-right text-2xl font-mono tabular-nums break-all">
+          {display || "0"}
+        </div>
+      </div>
+
+      {calcEntries.length > 0 && (
+        <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+          {calcEntries.map((e) => (
+            <div
+              key={e.key}
+              className="flex items-center justify-between text-sm bg-muted/40 rounded-lg px-3 py-1.5"
+            >
+              <span>+ {fmtKsh(e.unit_price)}</span>
+              <button
+                onClick={() => onRemove(e.key)}
+                className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid grid-cols-4 gap-2" style={{ willChange: "transform" }}>
+        {keys.map((k) => (
+          <button
+            key={k.label}
+            onClick={() => press(k.label)}
+            className={`${k.cls} border border-border rounded-xl text-xl font-semibold h-[60px] flex items-center justify-center active:scale-95 transition-transform`}
+          >
+            {k.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CartPanel(props: {
   cart: CartItem[];
   total: number;
   phone: string;
   setPhone: (s: string) => void;
-  setQty: (id: string, q: number) => void;
+  setQty: (key: string, q: number) => void;
+  removeItem: (key: string) => void;
   cashOpen: boolean;
   setCashOpen: (b: boolean) => void;
   cashPaid: string;
@@ -387,23 +650,11 @@ function CartPanel(props: {
   submitting: boolean;
   onSubmit: () => void;
 }) {
-  const {
-    cart, total, phone, setPhone, setQty,
-    cashOpen, setCashOpen, cashPaid, setCashPaid,
-    cashNum, mpesaAmount, submitting, onSubmit,
-  } = props;
-
   return (
     <>
-      {/* Mobile: fixed bottom panel; Desktop: side panel */}
       <div className="lg:hidden fixed bottom-16 inset-x-0 z-20 bg-card border-t border-border shadow-xl">
         <div className="max-w-md mx-auto px-4 py-3">
-          <CartInner
-            cart={cart} total={total} phone={phone} setPhone={setPhone} setQty={setQty}
-            cashOpen={cashOpen} setCashOpen={setCashOpen} cashPaid={cashPaid} setCashPaid={setCashPaid}
-            cashNum={cashNum} mpesaAmount={mpesaAmount} submitting={submitting} onSubmit={onSubmit}
-            scrollable
-          />
+          <CartInner {...props} scrollable />
         </div>
       </div>
       <div className="hidden lg:block lg:col-span-2">
@@ -411,23 +662,36 @@ function CartPanel(props: {
           <h2 className="font-semibold mb-3 flex items-center gap-2">
             <ShoppingCart className="h-4 w-4" /> Cart
           </h2>
-          <CartInner
-            cart={cart} total={total} phone={phone} setPhone={setPhone} setQty={setQty}
-            cashOpen={cashOpen} setCashOpen={setCashOpen} cashPaid={cashPaid} setCashPaid={setCashPaid}
-            cashNum={cashNum} mpesaAmount={mpesaAmount} submitting={submitting} onSubmit={onSubmit}
-          />
+          <CartInner {...props} />
         </div>
       </div>
     </>
   );
 }
 
-function CartInner(props: {
+function CartInner({
+  cart,
+  total,
+  phone,
+  setPhone,
+  setQty,
+  removeItem,
+  cashOpen,
+  setCashOpen,
+  cashPaid,
+  setCashPaid,
+  cashNum,
+  mpesaAmount,
+  submitting,
+  onSubmit,
+  scrollable,
+}: {
   cart: CartItem[];
   total: number;
   phone: string;
   setPhone: (s: string) => void;
-  setQty: (id: string, q: number) => void;
+  setQty: (key: string, q: number) => void;
+  removeItem: (key: string) => void;
   cashOpen: boolean;
   setCashOpen: (b: boolean) => void;
   cashPaid: string;
@@ -438,16 +702,10 @@ function CartInner(props: {
   onSubmit: () => void;
   scrollable?: boolean;
 }) {
-  const {
-    cart, total, phone, setPhone, setQty,
-    cashOpen, setCashOpen, cashPaid, setCashPaid,
-    cashNum, mpesaAmount, submitting, onSubmit, scrollable,
-  } = props;
-
   return (
     <div className={`space-y-2 ${scrollable ? "max-h-80 overflow-y-auto" : ""}`}>
       {cart.map((i) => (
-        <div key={i.product_id} className="flex items-center gap-2">
+        <div key={i.key} className="flex items-center gap-2">
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium truncate">{i.name}</div>
             <div className="text-xs text-muted-foreground">
@@ -459,7 +717,7 @@ function CartInner(props: {
               size="icon"
               variant="outline"
               className="h-7 w-7"
-              onClick={() => setQty(i.product_id, i.quantity - 1)}
+              onClick={() => setQty(i.key, i.quantity - 1)}
             >
               <Minus className="h-3 w-3" />
             </Button>
@@ -468,9 +726,17 @@ function CartInner(props: {
               size="icon"
               variant="outline"
               className="h-7 w-7"
-              onClick={() => setQty(i.product_id, i.quantity + 1)}
+              onClick={() => setQty(i.key, i.quantity + 1)}
             >
               <Plus className="h-3 w-3" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-muted-foreground"
+              onClick={() => removeItem(i.key)}
+            >
+              <X className="h-3 w-3" />
             </Button>
           </div>
         </div>
@@ -527,7 +793,12 @@ function CartInner(props: {
         </CollapsibleContent>
       </Collapsible>
 
-      <Button className="w-full" size="lg" onClick={onSubmit} disabled={submitting}>
+      <Button
+        className="w-full"
+        size="lg"
+        onClick={onSubmit}
+        disabled={submitting || total <= 0}
+      >
         {submitting
           ? "Sending…"
           : `Send M-Pesa request · ${fmtKsh(mpesaAmount > 0 ? mpesaAmount : total)}`}
@@ -573,8 +844,10 @@ function ResultScreen({
       </p>
       <div className="bg-card border border-border rounded-2xl p-4 text-left mb-4">
         {items.map((i) => (
-          <div key={i.product_id} className="flex justify-between text-sm py-1">
-            <span>{i.name} × {i.quantity}</span>
+          <div key={i.key} className="flex justify-between text-sm py-1">
+            <span>
+              {i.name} × {i.quantity}
+            </span>
             <span>{fmtKsh(i.unit_price * i.quantity)}</span>
           </div>
         ))}
@@ -610,7 +883,6 @@ function ResultScreen({
 }
 
 function SuccessConfetti() {
-  // Lightweight CSS confetti — disappears after ~2s
   const [show, setShow] = useState(true);
   useEffect(() => {
     const t = setTimeout(() => setShow(false), 2000);

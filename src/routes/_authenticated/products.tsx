@@ -30,6 +30,7 @@ import { fmtKsh } from "@/lib/format";
 const productsQuery = queryOptions({
   queryKey: ["products"],
   queryFn: () => listProducts(),
+  staleTime: 2 * 60 * 1000,
 });
 
 export const Route = createFileRoute("/_authenticated/products")({

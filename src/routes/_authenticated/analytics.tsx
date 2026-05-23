@@ -18,6 +18,7 @@ import { BarChart3, TrendingUp, Package, AlertTriangle, Trophy } from "lucide-re
 const analyticsQuery = queryOptions({
   queryKey: ["analytics"],
   queryFn: () => getAnalytics(),
+  staleTime: 60 * 1000,
 });
 
 export const Route = createFileRoute("/_authenticated/analytics")({

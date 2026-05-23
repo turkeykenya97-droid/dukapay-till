@@ -9,18 +9,22 @@ const phoneSchema = z
   .trim()
   .regex(/^(\+?254|0)\d{9}$/, "Enter a valid Kenyan phone number");
 
+const itemSchema = z.union([
+  z.object({
+    product_id: z.string().uuid(),
+    quantity: z.number().int().positive().max(10000),
+  }),
+  z.object({
+    name: z.string().trim().min(1).max(120),
+    unit_price: z.number().positive().max(1_000_000),
+    quantity: z.number().int().positive().max(10000),
+  }),
+]);
+
 const createSaleSchema = z.object({
   customer_phone: phoneSchema,
   cash_paid: z.number().min(0).max(1_000_000).optional().default(0),
-  items: z
-    .array(
-      z.object({
-        product_id: z.string().uuid(),
-        quantity: z.number().int().positive().max(10000),
-      })
-    )
-    .min(1)
-    .max(50),
+  items: z.array(itemSchema).min(1).max(50),
 });
 
 const saleIdSchema = z.object({ id: z.string().uuid() });
@@ -52,30 +56,49 @@ export const createSale = createServerFn({ method: "POST" })
       throw new Error("Payment till not set up. Please complete onboarding.");
     }
 
-    const productIds = data.items.map((i) => i.product_id);
-    const { data: products, error: prodErr } = await supabaseAdmin
-      .from("products")
-      .select("id, name, price, stock")
-      .eq("shop_id", s.shop_id)
-      .in("id", productIds);
-    if (prodErr) throw new Error(prodErr.message);
-    if (!products || products.length !== productIds.length) {
-      throw new Error("One or more products not found");
-    }
+    const productIds = data.items
+      .map((i) => ("product_id" in i ? i.product_id : null))
+      .filter((v): v is string => !!v);
+
+    const products = productIds.length
+      ? await supabaseAdmin
+          .from("products")
+          .select("id, name, price, stock")
+          .eq("shop_id", s.shop_id)
+          .in("id", productIds)
+          .then((r) => {
+            if (r.error) throw new Error(r.error.message);
+            if (!r.data || r.data.length !== productIds.length) {
+              throw new Error("One or more products not found");
+            }
+            return r.data;
+          })
+      : [];
 
     let total = 0;
     const lineItems = data.items.map((i) => {
-      const p = products.find((x) => x.id === i.product_id)!;
-      if (p.stock < i.quantity) {
-        throw new Error(`Insufficient stock for ${p.name}`);
+      if ("product_id" in i) {
+        const p = products.find((x) => x.id === i.product_id)!;
+        if (p.stock < i.quantity) {
+          throw new Error(`Insufficient stock for ${p.name}`);
+        }
+        const line_total = Number(p.price) * i.quantity;
+        total += line_total;
+        return {
+          product_id: p.id,
+          product_name: p.name,
+          quantity: i.quantity,
+          unit_price: Number(p.price),
+          line_total,
+        };
       }
-      const line_total = Number(p.price) * i.quantity;
+      const line_total = Number(i.unit_price) * i.quantity;
       total += line_total;
       return {
-        product_id: p.id,
-        product_name: p.name,
+        product_id: null as string | null,
+        product_name: i.name,
         quantity: i.quantity,
-        unit_price: Number(p.price),
+        unit_price: Number(i.unit_price),
         line_total,
       };
     });
