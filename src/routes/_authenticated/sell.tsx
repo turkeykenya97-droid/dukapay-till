@@ -127,7 +127,7 @@ function SellPage() {
     return products.filter((p) => p.name.toLowerCase().includes(q));
   }, [products, search]);
 
-  const addInventoryItem = (p: (typeof products)[number]) => {
+  const addInventoryItem = (p: { id: string; name: string; price: number; stock: number }) => {
     setCart((c) => {
       const existing = c.find((i) => i.product_id === p.id);
       if (existing) {
