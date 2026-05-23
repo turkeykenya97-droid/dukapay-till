@@ -47,7 +47,7 @@ function HistoryPage() {
   ];
 
   return (
-    <div className="max-w-md mx-auto px-4 pt-6 pb-4">
+    <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-4">
       <h1 className="text-2xl font-bold mb-4">Sales history</h1>
       <div className="flex gap-1 mb-4 bg-muted p-1 rounded-xl">
         {tabs.map((t) => (
