@@ -37,6 +37,7 @@ function HistoryPage() {
   const query = useQuery({
     queryKey: ["history", filter, page],
     queryFn: () => get({ data: { ...range, page, page_size: 20 } }),
+    staleTime: 60 * 1000,
   });
 
   const tabs: { id: Filter; label: string }[] = [
