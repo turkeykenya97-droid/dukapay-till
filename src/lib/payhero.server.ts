@@ -93,6 +93,7 @@ export async function sendStkPush(args: StkPushArgs) {
     amount: args.amount,
     phone_number: formatted,
     channel_id: args.channel_id,
+    provider: "m-pesa",
     external_reference: args.external_reference,
     callback_url: getCallbackUrl(),
   };
