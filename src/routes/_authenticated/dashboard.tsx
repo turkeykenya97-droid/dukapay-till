@@ -37,7 +37,7 @@ function DashboardPage() {
   const expired = data.shop.subscription_status === "expired";
 
   return (
-    <div className="max-w-md mx-auto px-4 pt-6 pb-4">
+    <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-4">
       <header className="flex items-start justify-between mb-6">
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Welcome</p>
@@ -56,7 +56,7 @@ function DashboardPage() {
         </span>
       </header>
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center text-muted-foreground text-xs mb-1">
             <Receipt className="h-3.5 w-3.5 mr-1" />
@@ -70,6 +70,20 @@ function DashboardPage() {
             Revenue today
           </div>
           <div className="text-2xl font-bold">{fmtKsh(data.today.revenue)}</div>
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center text-muted-foreground text-xs mb-1">
+            <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+            Low stock items
+          </div>
+          <div className="text-2xl font-bold">{data.low_stock.length}</div>
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center text-muted-foreground text-xs mb-1">
+            <ShoppingCart className="h-3.5 w-3.5 mr-1" />
+            Plan
+          </div>
+          <div className="text-2xl font-bold capitalize">{data.shop.subscription_status}</div>
         </div>
       </div>
 
