@@ -11,6 +11,7 @@ const phoneSchema = z
 
 const createSaleSchema = z.object({
   customer_phone: phoneSchema,
+  cash_paid: z.number().min(0).max(1_000_000).optional().default(0),
   items: z
     .array(
       z.object({
@@ -37,24 +38,20 @@ export const createSale = createServerFn({ method: "POST" })
     const s = await requireSession();
     const shop = await getShopOrThrow(s.shop_id);
 
-    // Subscription check
     const status = computeSubscriptionStatus(shop.subscription_expiry);
     if (status === "expired") {
       throw new Error("Your subscription has expired. Please renew to continue.");
     }
-    // PIN session check
     if (
       !shop.pin_valid_until ||
       new Date(shop.pin_valid_until).getTime() < Date.now()
     ) {
       throw new Error("PIN_REQUIRED");
     }
-    // Till registered
     if (!shop.payhero_channel_id) {
       throw new Error("Payment till not set up. Please complete onboarding.");
     }
 
-    // Validate products + stock
     const productIds = data.items.map((i) => i.product_id);
     const { data: products, error: prodErr } = await supabaseAdmin
       .from("products")
@@ -83,12 +80,19 @@ export const createSale = createServerFn({ method: "POST" })
       };
     });
 
-    // Create sale (pending)
+    const cashPaid = Math.min(Math.round(data.cash_paid ?? 0), Math.round(total));
+    const mpesaAmount = Math.round(total) - cashPaid;
+    if (mpesaAmount <= 0) {
+      throw new Error("Cash paid covers the full amount — no M-Pesa needed. Reduce cash amount.");
+    }
+
     const { data: sale, error: saleErr } = await supabaseAdmin
       .from("sales")
       .insert({
         shop_id: s.shop_id,
         total_amount: total,
+        cash_paid: cashPaid,
+        mpesa_amount: mpesaAmount,
         customer_phone: data.customer_phone,
         payment_status: "pending",
       })
@@ -96,7 +100,6 @@ export const createSale = createServerFn({ method: "POST" })
       .single();
     if (saleErr || !sale) throw new Error(saleErr?.message ?? "Failed to create sale");
 
-    // Create sale items
     const { error: itemsErr } = await supabaseAdmin
       .from("sale_items")
       .insert(lineItems.map((li) => ({ ...li, sale_id: sale.id })));
@@ -105,11 +108,10 @@ export const createSale = createServerFn({ method: "POST" })
       throw new Error(itemsErr.message);
     }
 
-    // STK Push to shop owner's channel
     const reference = `SALE-${sale.id}`;
     try {
       const stk = await sendStkPush({
-        amount: Math.round(total),
+        amount: mpesaAmount,
         phone_number: data.customer_phone,
         channel_id: shop.payhero_channel_id,
         external_reference: reference,
@@ -129,7 +131,31 @@ export const createSale = createServerFn({ method: "POST" })
       throw e;
     }
 
-    return { sale_id: sale.id, total, status: "pending" as const };
+    return { sale_id: sale.id, total, cash_paid: cashPaid, mpesa_amount: mpesaAmount, status: "pending" as const };
+  });
+
+export const cancelSale = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => saleIdSchema.parse(d))
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    const { data: sale, error: getErr } = await supabaseAdmin
+      .from("sales")
+      .select("id, payment_status")
+      .eq("id", data.id)
+      .eq("shop_id", s.shop_id)
+      .maybeSingle();
+    if (getErr) throw new Error(getErr.message);
+    if (!sale) throw new Error("Sale not found");
+    if (sale.payment_status === "completed") {
+      throw new Error("Completed sales cannot be cancelled");
+    }
+    const { error } = await supabaseAdmin
+      .from("sales")
+      .update({ payment_status: "cancelled" })
+      .eq("id", data.id)
+      .eq("shop_id", s.shop_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const getSaleStatus = createServerFn({ method: "POST" })
@@ -138,7 +164,7 @@ export const getSaleStatus = createServerFn({ method: "POST" })
     const s = await requireSession();
     const { data: sale, error } = await supabaseAdmin
       .from("sales")
-      .select("id, total_amount, customer_phone, payment_status, sold_at")
+      .select("id, total_amount, cash_paid, mpesa_amount, customer_phone, payment_status, sold_at")
       .eq("id", data.id)
       .eq("shop_id", s.shop_id)
       .maybeSingle();
@@ -157,7 +183,7 @@ export const getSalesHistory = createServerFn({ method: "POST" })
     let q = supabaseAdmin
       .from("sales")
       .select(
-        "id, total_amount, customer_phone, payment_status, sold_at, sale_items(id, product_name, quantity, unit_price, line_total)",
+        "id, total_amount, cash_paid, mpesa_amount, customer_phone, payment_status, sold_at, sale_items(id, product_name, quantity, unit_price, line_total)",
         { count: "exact" }
       )
       .eq("shop_id", s.shop_id)
@@ -221,5 +247,152 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
     },
     today: { sales_count, revenue },
     low_stock,
+  };
+});
+
+export const getAnalytics = createServerFn({ method: "GET" }).handler(async () => {
+  const s = await requireSession();
+
+  const now = new Date();
+  const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startWeek = new Date(now);
+  startWeek.setDate(now.getDate() - 7);
+  startWeek.setHours(0, 0, 0, 0);
+  const start30 = new Date(now.getTime() - 30 * 86400000);
+  const start7Days = new Date(now);
+  start7Days.setDate(now.getDate() - 6);
+  start7Days.setHours(0, 0, 0, 0);
+
+  const [monthSalesRes, weekItemsRes, monthItemsRes, productsRes, dailyRes] =
+    await Promise.all([
+      supabaseAdmin
+        .from("sales")
+        .select("id, total_amount, sold_at")
+        .eq("shop_id", s.shop_id)
+        .eq("payment_status", "completed")
+        .gte("sold_at", startMonth.toISOString()),
+      supabaseAdmin
+        .from("sales")
+        .select("id, sale_items(product_id, product_name, quantity)")
+        .eq("shop_id", s.shop_id)
+        .eq("payment_status", "completed")
+        .gte("sold_at", startWeek.toISOString()),
+      supabaseAdmin
+        .from("sales")
+        .select("id, sale_items(product_id, product_name, quantity)")
+        .eq("shop_id", s.shop_id)
+        .eq("payment_status", "completed")
+        .gte("sold_at", start30.toISOString()),
+      supabaseAdmin
+        .from("products")
+        .select("id, name, stock, reorder_level")
+        .eq("shop_id", s.shop_id),
+      supabaseAdmin
+        .from("sales")
+        .select("total_amount, sold_at")
+        .eq("shop_id", s.shop_id)
+        .eq("payment_status", "completed")
+        .gte("sold_at", start7Days.toISOString()),
+    ]);
+
+  if (monthSalesRes.error) throw new Error(monthSalesRes.error.message);
+  if (weekItemsRes.error) throw new Error(weekItemsRes.error.message);
+  if (monthItemsRes.error) throw new Error(monthItemsRes.error.message);
+  if (productsRes.error) throw new Error(productsRes.error.message);
+  if (dailyRes.error) throw new Error(dailyRes.error.message);
+
+  const monthSales = monthSalesRes.data ?? [];
+  const monthRevenue = monthSales.reduce(
+    (sum, r) => sum + Number(r.total_amount),
+    0
+  );
+
+  type Item = { product_id: string | null; product_name: string; quantity: number };
+  const flatten = (rows: { sale_items: Item[] | null }[] | null): Item[] =>
+    (rows ?? []).flatMap((r) => r.sale_items ?? []);
+
+  const weekItems = flatten(weekItemsRes.data as any);
+  const monthItems = flatten(monthItemsRes.data as any);
+
+  const tallyByProduct = (items: Item[]) => {
+    const map = new Map<string, { name: string; quantity: number; id: string | null }>();
+    for (const it of items) {
+      const key = it.product_id ?? it.product_name;
+      const existing = map.get(key);
+      if (existing) existing.quantity += it.quantity;
+      else map.set(key, { id: it.product_id, name: it.product_name, quantity: it.quantity });
+    }
+    return Array.from(map.values());
+  };
+
+  const weekTally = tallyByProduct(weekItems).sort((a, b) => b.quantity - a.quantity);
+  const monthTally = tallyByProduct(monthItems);
+
+  const best_selling = weekTally.slice(0, 10);
+
+  const products = productsRes.data ?? [];
+  const monthSoldByProductId = new Map<string, number>();
+  for (const t of monthTally) {
+    if (t.id) monthSoldByProductId.set(t.id, t.quantity);
+  }
+  const slow_moving = products
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      stock: p.stock,
+      quantity_sold: monthSoldByProductId.get(p.id) ?? 0,
+    }))
+    .sort((a, b) => a.quantity_sold - b.quantity_sold)
+    .slice(0, 10);
+
+  const weekSoldByProductId = new Map<string, number>();
+  for (const t of weekTally) {
+    if (t.id) weekSoldByProductId.set(t.id, t.quantity);
+  }
+  const restock = products
+    .filter((p) => p.stock <= p.reorder_level)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      stock: p.stock,
+      reorder_level: p.reorder_level,
+      sold_this_week: weekSoldByProductId.get(p.id) ?? 0,
+    }))
+    .sort((a, b) => a.stock - b.stock);
+
+  // Daily revenue last 7 days
+  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const buckets: { key: string; label: string; revenue: number }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    d.setHours(0, 0, 0, 0);
+    buckets.push({
+      key: d.toISOString().slice(0, 10),
+      label: dayLabels[d.getDay()],
+      revenue: 0,
+    });
+  }
+  const bucketMap = new Map(buckets.map((b) => [b.key, b]));
+  for (const row of dailyRes.data ?? []) {
+    const key = new Date(row.sold_at).toISOString().slice(0, 10);
+    const b = bucketMap.get(key);
+    if (b) b.revenue += Number(row.total_amount);
+  }
+
+  const most_sold = best_selling[0] ?? null;
+  const low_stock_count = products.filter((p) => p.stock <= p.reorder_level).length;
+
+  return {
+    summary: {
+      sales_count_month: monthSales.length,
+      revenue_month: monthRevenue,
+      most_sold,
+      low_stock_count,
+    },
+    best_selling,
+    slow_moving,
+    restock,
+    daily_revenue: buckets,
   };
 });
