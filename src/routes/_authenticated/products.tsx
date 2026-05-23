@@ -57,7 +57,7 @@ function ProductsPage() {
   );
 
   return (
-    <div className="max-w-md mx-auto px-4 pt-6 pb-4">
+    <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-4">
       <header className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Products</h1>
         <Button
@@ -86,7 +86,7 @@ function ProductsPage() {
           }}
         />
       ) : (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {filtered.map((p) => {
             const low = p.stock <= p.reorder_level;
             return (
