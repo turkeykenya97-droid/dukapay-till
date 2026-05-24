@@ -88,6 +88,9 @@ export const deleteProduct = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("shop_id", s.shop_id);
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[deleteProduct]", error);
+      throw new Error("Failed to delete product.");
+    }
     return { ok: true };
   });
