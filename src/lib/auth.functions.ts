@@ -133,44 +133,66 @@ export const getCurrentShop = createServerFn({ method: "GET" }).handler(async ()
   }
 });
 
-// Simple in-memory PIN attempt tracker (resets on Worker restart, fine for demo).
-const pinAttempts = new Map<string, { count: number; lockUntil: number }>();
+const MAX_PIN_ATTEMPTS = 5;
+const PIN_LOCK_MS = 15 * 60 * 1000;
 
 export const verifyPin = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => pinSchema.parse(d))
   .handler(async ({ data }) => {
     const session = await requireSession();
-    const key = session.shop_id;
+    const shopId = session.shop_id;
     const now = Date.now();
-    const attempt = pinAttempts.get(key);
-    if (attempt && attempt.lockUntil > now) {
-      const mins = Math.ceil((attempt.lockUntil - now) / 60000);
+
+    const { data: tracker } = await supabaseAdmin
+      .from("pin_attempts")
+      .select("attempt_count, locked_until")
+      .eq("shop_id", shopId)
+      .maybeSingle();
+
+    if (tracker?.locked_until && new Date(tracker.locked_until).getTime() > now) {
+      const mins = Math.ceil(
+        (new Date(tracker.locked_until).getTime() - now) / 60000
+      );
       throw new Error(`Too many attempts. Try again in ${mins} minute(s).`);
     }
 
     const { data: shop, error } = await supabaseAdmin
       .from("shops")
       .select("pin_hash")
-      .eq("id", session.shop_id)
+      .eq("id", shopId)
       .single();
-    if (error || !shop) throw new Error("Shop not found");
+    if (error || !shop) {
+      console.error("[verifyPin] shop lookup", error);
+      throw new Error("Unable to verify PIN. Please try again.");
+    }
 
     const ok = await bcrypt.compare(data.pin, shop.pin_hash);
     if (!ok) {
-      const next = (attempt?.count ?? 0) + 1;
-      const lockUntil = next >= 5 ? now + 15 * 60 * 1000 : 0;
-      pinAttempts.set(key, { count: next, lockUntil });
+      const nextCount = (tracker?.attempt_count ?? 0) + 1;
+      const locked_until =
+        nextCount >= MAX_PIN_ATTEMPTS
+          ? new Date(now + PIN_LOCK_MS).toISOString()
+          : null;
+      await supabaseAdmin
+        .from("pin_attempts")
+        .upsert({
+          shop_id: shopId,
+          attempt_count: nextCount,
+          locked_until,
+          updated_at: new Date().toISOString(),
+        });
       throw new Error("Incorrect PIN");
     }
 
-    pinAttempts.delete(key);
+    await supabaseAdmin.from("pin_attempts").delete().eq("shop_id", shopId);
     const pin_valid_until = new Date(now + 24 * 60 * 60 * 1000).toISOString();
     await supabaseAdmin
       .from("shops")
       .update({ pin_valid_until })
-      .eq("id", session.shop_id);
+      .eq("id", shopId);
     return { pin_valid_until };
   });
+
 
 export const onboardTill = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => onboardSchema.parse(d))
