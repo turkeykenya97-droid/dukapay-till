@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      pin_attempts: {
+        Row: {
+          attempt_count: number
+          locked_until: string | null
+          shop_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          locked_until?: string | null
+          shop_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          locked_until?: string | null
+          shop_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           created_at: string
