@@ -215,7 +215,10 @@ export const onboardTill = createServerFn({ method: "POST" })
         till_type: data.channel_type,
       })
       .eq("id", session.shop_id);
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[onboardTill]", error);
+      throw new Error("Failed to save till information.");
+    }
 
     return { channel_id: channelId };
   });
