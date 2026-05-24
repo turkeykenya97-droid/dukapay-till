@@ -1,5 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+function verifySignature(rawBody: string, signature: string | null): boolean {
+  const secret = process.env.PAYHERO_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error("[payhero] PAYHERO_WEBHOOK_SECRET not configured — rejecting webhook");
+    return false;
+  }
+  if (!signature) return false;
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+  // Accept either raw hex or "sha256=<hex>"
+  const provided = signature.startsWith("sha256=") ? signature.slice(7) : signature;
+  try {
+    const a = Buffer.from(expected, "hex");
+    const b = Buffer.from(provided, "hex");
+    if (a.length !== b.length) return false;
+    return timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
 
 // Very simple in-memory rate limiter (per Worker instance).
 const rateBuckets = new Map<string, { count: number; resetAt: number }>();
@@ -51,13 +72,17 @@ export const Route = createFileRoute("/api/public/webhooks/payhero")({
           return new Response("Too Many Requests", { status: 429 });
         }
 
-        // TODO: verify PayHero signature once spec confirmed
+        // Verify PayHero signature (HMAC-SHA256)
         const signature = request.headers.get("x-payhero-signature");
-        console.log("[payhero] webhook received", { ip, signature });
+        const rawBody = await request.text();
+        if (!verifySignature(rawBody, signature)) {
+          console.warn("[payhero] invalid or missing signature", { ip });
+          return new Response("Unauthorized", { status: 401 });
+        }
 
         let payload: Record<string, unknown> = {};
         try {
-          payload = (await request.json()) as Record<string, unknown>;
+          payload = JSON.parse(rawBody) as Record<string, unknown>;
         } catch {
           return new Response("ok", { status: 200 });
         }

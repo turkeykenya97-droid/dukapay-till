@@ -41,7 +41,10 @@ export async function getShopOrThrow(shopId: string): Promise<ShopRecord> {
     )
     .eq("id", shopId)
     .maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("[getShopOrThrow]", error);
+    throw new Error("Unable to load shop.");
+  }
   if (!data) throw new Error("Shop not found");
   return data as ShopRecord;
 }

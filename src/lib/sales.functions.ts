@@ -67,7 +67,7 @@ export const createSale = createServerFn({ method: "POST" })
           .eq("shop_id", s.shop_id)
           .in("id", productIds)
           .then((r) => {
-            if (r.error) throw new Error(r.error.message);
+            if (r.error) { console.error("[sales:products]", r.error); throw new Error("Failed to load products."); }
             if (!r.data || r.data.length !== productIds.length) {
               throw new Error("One or more products not found");
             }
@@ -121,14 +121,15 @@ export const createSale = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
-    if (saleErr || !sale) throw new Error(saleErr?.message ?? "Failed to create sale");
+    if (saleErr || !sale) { console.error("[createSale:insert]", saleErr); throw new Error("Failed to create sale."); }
 
     const { error: itemsErr } = await supabaseAdmin
       .from("sale_items")
       .insert(lineItems.map((li) => ({ ...li, sale_id: sale.id })));
     if (itemsErr) {
+      console.error("[createSale:items]", itemsErr);
       await supabaseAdmin.from("sales").delete().eq("id", sale.id);
-      throw new Error(itemsErr.message);
+      throw new Error("Failed to create sale items.");
     }
 
     const reference = `SALE-${sale.id}`;
@@ -167,7 +168,7 @@ export const cancelSale = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("shop_id", s.shop_id)
       .maybeSingle();
-    if (getErr) throw new Error(getErr.message);
+    if (getErr) { console.error("[cancelSale]", getErr); throw new Error("Sale lookup failed."); }
     if (!sale) throw new Error("Sale not found");
     if (sale.payment_status === "completed") {
       throw new Error("Completed sales cannot be cancelled");
@@ -177,7 +178,7 @@ export const cancelSale = createServerFn({ method: "POST" })
       .update({ payment_status: "cancelled" })
       .eq("id", data.id)
       .eq("shop_id", s.shop_id);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[cancelSale:update]", error); throw new Error("Failed to cancel sale."); }
     return { ok: true };
   });
 
@@ -191,7 +192,7 @@ export const getSaleStatus = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("shop_id", s.shop_id)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[getSaleStatus]", error); throw new Error("Failed to load sale."); }
     if (!sale) throw new Error("Sale not found");
     return sale;
   });
@@ -216,7 +217,7 @@ export const getSalesHistory = createServerFn({ method: "POST" })
     if (data.to) q = q.lte("sold_at", data.to);
 
     const { data: rows, error, count } = await q;
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[getSalesHistory]", error); throw new Error("Failed to load history."); }
     return { rows: rows ?? [], total: count ?? 0, page: data.page, page_size: data.page_size };
   });
 
@@ -240,8 +241,8 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
       .eq("shop_id", s.shop_id),
   ]);
 
-  if (todaySalesRes.error) throw new Error(todaySalesRes.error.message);
-  if (lowStockRes.error) throw new Error(lowStockRes.error.message);
+  if (todaySalesRes.error) { console.error("[todaySalesRes]", todaySalesRes.error); throw new Error("Failed to load data."); }
+  if (lowStockRes.error) { console.error("[lowStockRes]", lowStockRes.error); throw new Error("Failed to load data."); }
 
   const sales = todaySalesRes.data ?? [];
   const sales_count = sales.length;
@@ -318,11 +319,11 @@ export const getAnalytics = createServerFn({ method: "GET" }).handler(async () =
         .gte("sold_at", start7Days.toISOString()),
     ]);
 
-  if (monthSalesRes.error) throw new Error(monthSalesRes.error.message);
-  if (weekItemsRes.error) throw new Error(weekItemsRes.error.message);
-  if (monthItemsRes.error) throw new Error(monthItemsRes.error.message);
-  if (productsRes.error) throw new Error(productsRes.error.message);
-  if (dailyRes.error) throw new Error(dailyRes.error.message);
+  if (monthSalesRes.error) { console.error("[monthSalesRes]", monthSalesRes.error); throw new Error("Failed to load data."); }
+  if (weekItemsRes.error) { console.error("[weekItemsRes]", weekItemsRes.error); throw new Error("Failed to load data."); }
+  if (monthItemsRes.error) { console.error("[monthItemsRes]", monthItemsRes.error); throw new Error("Failed to load data."); }
+  if (productsRes.error) { console.error("[productsRes]", productsRes.error); throw new Error("Failed to load data."); }
+  if (dailyRes.error) { console.error("[dailyRes]", dailyRes.error); throw new Error("Failed to load data."); }
 
   const monthSales = monthSalesRes.data ?? [];
   const monthRevenue = monthSales.reduce(

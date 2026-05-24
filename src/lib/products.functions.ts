@@ -27,7 +27,10 @@ export const listProducts = createServerFn({ method: "GET" }).handler(async () =
     .select("*")
     .eq("shop_id", s.shop_id)
     .order("name", { ascending: true });
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("[listProducts]", error);
+    throw new Error("Failed to load products.");
+  }
   return data ?? [];
 });
 
@@ -49,7 +52,10 @@ export const createProduct = createServerFn({ method: "POST" })
       .insert({ ...data, shop_id: s.shop_id })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[createProduct]", error);
+      throw new Error("Failed to create product.");
+    }
     return row;
   });
 
@@ -65,7 +71,10 @@ export const updateProduct = createServerFn({ method: "POST" })
       .eq("shop_id", s.shop_id)
       .select("*")
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[updateProduct]", error);
+      throw new Error("Failed to update product.");
+    }
     if (!row) throw new Error("Product not found");
     return row;
   });
@@ -79,6 +88,9 @@ export const deleteProduct = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("shop_id", s.shop_id);
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[deleteProduct]", error);
+      throw new Error("Failed to delete product.");
+    }
     return { ok: true };
   });
