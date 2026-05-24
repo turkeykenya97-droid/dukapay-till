@@ -71,7 +71,10 @@ export const updateProduct = createServerFn({ method: "POST" })
       .eq("shop_id", s.shop_id)
       .select("*")
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[updateProduct]", error);
+      throw new Error("Failed to update product.");
+    }
     if (!row) throw new Error("Product not found");
     return row;
   });
