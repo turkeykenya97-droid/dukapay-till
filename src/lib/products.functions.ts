@@ -52,7 +52,10 @@ export const createProduct = createServerFn({ method: "POST" })
       .insert({ ...data, shop_id: s.shop_id })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[createProduct]", error);
+      throw new Error("Failed to create product.");
+    }
     return row;
   });
 
