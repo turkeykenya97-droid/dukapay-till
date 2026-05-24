@@ -72,13 +72,17 @@ export const Route = createFileRoute("/api/public/webhooks/payhero")({
           return new Response("Too Many Requests", { status: 429 });
         }
 
-        // TODO: verify PayHero signature once spec confirmed
+        // Verify PayHero signature (HMAC-SHA256)
         const signature = request.headers.get("x-payhero-signature");
-        console.log("[payhero] webhook received", { ip, signature });
+        const rawBody = await request.text();
+        if (!verifySignature(rawBody, signature)) {
+          console.warn("[payhero] invalid or missing signature", { ip });
+          return new Response("Unauthorized", { status: 401 });
+        }
 
         let payload: Record<string, unknown> = {};
         try {
-          payload = (await request.json()) as Record<string, unknown>;
+          payload = JSON.parse(rawBody) as Record<string, unknown>;
         } catch {
           return new Response("ok", { status: 200 });
         }
