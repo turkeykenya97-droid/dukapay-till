@@ -77,7 +77,10 @@ export const registerShop = createServerFn({ method: "POST" })
       })
       .select("id, phone")
       .single();
-    if (error || !shop) throw new Error(error?.message ?? "Failed to create shop");
+    if (error || !shop) {
+      console.error("[registerShop]", error);
+      throw new Error("Failed to create shop. Please try again.");
+    }
 
     const token = await signShopJwt({ shop_id: shop.id, phone: shop.phone });
     setSessionCookie(token);
@@ -92,7 +95,10 @@ export const loginShop = createServerFn({ method: "POST" })
       .select("id, phone, password_hash, payhero_channel_id")
       .eq("phone", data.phone)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[loginShop]", error);
+      throw new Error("Login failed. Please try again.");
+    }
     if (!shop) throw new Error("Invalid phone or password");
 
     const ok = await bcrypt.compare(data.password, shop.password_hash);
