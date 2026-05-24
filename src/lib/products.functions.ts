@@ -31,6 +31,7 @@ export const listProducts = createServerFn({ method: "GET" }).handler(async () =
     console.error("[listProducts]", error);
     throw new Error("Failed to load products.");
   }
+  return data ?? [];
 });
 
 export const createProduct = createServerFn({ method: "POST" })
