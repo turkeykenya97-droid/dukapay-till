@@ -27,8 +27,10 @@ export const listProducts = createServerFn({ method: "GET" }).handler(async () =
     .select("*")
     .eq("shop_id", s.shop_id)
     .order("name", { ascending: true });
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  if (error) {
+    console.error("[listProducts]", error);
+    throw new Error("Failed to load products.");
+  }
 });
 
 export const createProduct = createServerFn({ method: "POST" })
