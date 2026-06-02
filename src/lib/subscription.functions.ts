@@ -23,7 +23,10 @@ export const initiateRenewal = createServerFn({ method: "POST" }).handler(async 
     })
     .select("id")
     .single();
-  if (error || !payment) throw new Error(error?.message ?? "Failed to start payment");
+  if (error || !payment) {
+    console.error("[initiateRenewal:insert]", error);
+    throw new Error("Failed to start payment. Please try again.");
+  }
 
   const reference = `SUB-${payment.id}`;
   try {
