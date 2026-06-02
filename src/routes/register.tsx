@@ -84,6 +84,20 @@ function RegisterPage() {
           <p className="text-sm text-muted-foreground">7-day free trial, no card needed</p>
         </div>
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+          {mutation.isError && (
+            <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              <p className="font-medium">{(mutation.error as Error).message}</p>
+              {/already exists/i.test((mutation.error as Error).message) && (
+                <p className="mt-1 text-destructive/80">
+                  This phone is already registered.{" "}
+                  <Link to="/login" className="underline font-medium">
+                    Sign in instead
+                  </Link>
+                  .
+                </p>
+              )}
+            </div>
+          )}
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="owner_name">Your full name</Label>
@@ -131,6 +145,7 @@ function RegisterPage() {
               {mutation.isPending ? "Creating…" : "Create account"}
             </Button>
           </form>
+
           <p className="mt-4 text-sm text-center text-muted-foreground">
             Already have an account?{" "}
             <Link to="/login" className="text-primary font-medium hover:underline">
