@@ -128,8 +128,8 @@ export type Database = {
           customer_phone: string
           id: string
           mpesa_amount: number | null
-          payhero_checkout_request_id: string | null
-          payhero_reference: string | null
+          payment_checkout_request_id: string | null
+          payment_reference: string | null
           payment_status: string
           shop_id: string
           sold_at: string
@@ -141,8 +141,8 @@ export type Database = {
           customer_phone: string
           id?: string
           mpesa_amount?: number | null
-          payhero_checkout_request_id?: string | null
-          payhero_reference?: string | null
+          payment_checkout_request_id?: string | null
+          payment_reference?: string | null
           payment_status?: string
           shop_id: string
           sold_at?: string
@@ -154,8 +154,8 @@ export type Database = {
           customer_phone?: string
           id?: string
           mpesa_amount?: number | null
-          payhero_checkout_request_id?: string | null
-          payhero_reference?: string | null
+          payment_checkout_request_id?: string | null
+          payment_reference?: string | null
           payment_status?: string
           shop_id?: string
           sold_at?: string
@@ -177,7 +177,8 @@ export type Database = {
           id: string
           owner_name: string
           password_hash: string
-          payhero_channel_id: number | null
+          payment_api_key: string | null
+          payment_channel_id: string | null
           phone: string
           pin_hash: string
           pin_valid_until: string | null
@@ -194,7 +195,8 @@ export type Database = {
           id?: string
           owner_name: string
           password_hash: string
-          payhero_channel_id?: number | null
+          payment_api_key?: string | null
+          payment_channel_id?: string | null
           phone: string
           pin_hash: string
           pin_valid_until?: string | null
@@ -211,7 +213,8 @@ export type Database = {
           id?: string
           owner_name?: string
           password_hash?: string
-          payhero_channel_id?: number | null
+          payment_api_key?: string | null
+          payment_channel_id?: string | null
           phone?: string
           pin_hash?: string
           pin_valid_until?: string | null
@@ -230,7 +233,7 @@ export type Database = {
           amount: number
           id: string
           paid_at: string
-          payhero_reference: string | null
+          payment_reference: string | null
           payment_status: string
           shop_id: string
         }
@@ -238,7 +241,7 @@ export type Database = {
           amount: number
           id?: string
           paid_at?: string
-          payhero_reference?: string | null
+          payment_reference?: string | null
           payment_status?: string
           shop_id: string
         }
@@ -246,7 +249,7 @@ export type Database = {
           amount?: number
           id?: string
           paid_at?: string
-          payhero_reference?: string | null
+          payment_reference?: string | null
           payment_status?: string
           shop_id?: string
         }
