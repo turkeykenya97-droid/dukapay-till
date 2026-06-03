@@ -20,7 +20,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as ApiPublicWebhooksPayheroRouteImport } from './routes/api/public/webhooks/payhero'
+import { Route as ApiPublicWebhooksSmartpayRouteImport } from './routes/api/public/webhooks/smartpay'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -77,10 +77,10 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const ApiPublicWebhooksPayheroRoute =
-  ApiPublicWebhooksPayheroRouteImport.update({
-    id: '/api/public/webhooks/payhero',
-    path: '/api/public/webhooks/payhero',
+const ApiPublicWebhooksSmartpayRoute =
+  ApiPublicWebhooksSmartpayRouteImport.update({
+    id: '/api/public/webhooks/smartpay',
+    path: '/api/public/webhooks/smartpay',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -95,7 +95,7 @@ export interface FileRoutesByFullPath {
   '/products': typeof AuthenticatedProductsRoute
   '/sell': typeof AuthenticatedSellRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
-  '/api/public/webhooks/payhero': typeof ApiPublicWebhooksPayheroRoute
+  '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -108,7 +108,7 @@ export interface FileRoutesByTo {
   '/products': typeof AuthenticatedProductsRoute
   '/sell': typeof AuthenticatedSellRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
-  '/api/public/webhooks/payhero': typeof ApiPublicWebhooksPayheroRoute
+  '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -123,7 +123,7 @@ export interface FileRoutesById {
   '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/sell': typeof AuthenticatedSellRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
-  '/api/public/webhooks/payhero': typeof ApiPublicWebhooksPayheroRoute
+  '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -138,7 +138,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/sell'
     | '/subscription'
-    | '/api/public/webhooks/payhero'
+    | '/api/public/webhooks/smartpay'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -151,7 +151,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/sell'
     | '/subscription'
-    | '/api/public/webhooks/payhero'
+    | '/api/public/webhooks/smartpay'
   id:
     | '__root__'
     | '/'
@@ -165,7 +165,7 @@ export interface FileRouteTypes {
     | '/_authenticated/products'
     | '/_authenticated/sell'
     | '/_authenticated/subscription'
-    | '/api/public/webhooks/payhero'
+    | '/api/public/webhooks/smartpay'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -173,7 +173,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
-  ApiPublicWebhooksPayheroRoute: typeof ApiPublicWebhooksPayheroRoute
+  ApiPublicWebhooksSmartpayRoute: typeof ApiPublicWebhooksSmartpayRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -255,11 +255,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/api/public/webhooks/payhero': {
-      id: '/api/public/webhooks/payhero'
-      path: '/api/public/webhooks/payhero'
-      fullPath: '/api/public/webhooks/payhero'
-      preLoaderRoute: typeof ApiPublicWebhooksPayheroRouteImport
+    '/api/public/webhooks/smartpay': {
+      id: '/api/public/webhooks/smartpay'
+      path: '/api/public/webhooks/smartpay'
+      fullPath: '/api/public/webhooks/smartpay'
+      preLoaderRoute: typeof ApiPublicWebhooksSmartpayRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -294,7 +294,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
-  ApiPublicWebhooksPayheroRoute: ApiPublicWebhooksPayheroRoute,
+  ApiPublicWebhooksSmartpayRoute: ApiPublicWebhooksSmartpayRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
