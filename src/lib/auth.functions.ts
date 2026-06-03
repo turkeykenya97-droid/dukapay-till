@@ -5,7 +5,8 @@ import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { signShopJwt, SESSION_COOKIE } from "./jwt.server";
 import { getSessionPayload, getShopOrThrow, requireSession } from "./session.server";
-import { registerPaymentChannel } from "./payhero.server";
+import { registerPaymentChannel } from "./smartpay.server";
+import { hasPaymentChannel } from "./session.server";
 
 const phoneSchema = z
   .string()
