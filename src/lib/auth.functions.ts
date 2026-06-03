@@ -5,7 +5,8 @@ import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { signShopJwt, SESSION_COOKIE } from "./jwt.server";
 import { getSessionPayload, getShopOrThrow, requireSession } from "./session.server";
-import { registerPaymentChannel } from "./payhero.server";
+import { registerPaymentChannel } from "./smartpay.server";
+import { hasPaymentChannel } from "./session.server";
 
 const phoneSchema = z
   .string()
@@ -92,7 +93,7 @@ export const loginShop = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: shop, error } = await supabaseAdmin
       .from("shops")
-      .select("id, phone, password_hash, payhero_channel_id")
+      .select("id, phone, password_hash, payment_channel_id, payment_api_key")
       .eq("phone", data.phone)
       .maybeSingle();
     if (error) {
@@ -108,7 +109,7 @@ export const loginShop = createServerFn({ method: "POST" })
     setSessionCookie(token);
     return {
       shop_id: shop.id,
-      needs_onboarding: shop.payhero_channel_id == null,
+      needs_onboarding: !hasPaymentChannel(shop),
     };
   });
 
@@ -126,7 +127,7 @@ export const getCurrentShop = createServerFn({ method: "GET" }).handler(async ()
       ...shop,
       pin_session_valid:
         !!shop.pin_valid_until && new Date(shop.pin_valid_until).getTime() > Date.now(),
-      needs_onboarding: shop.payhero_channel_id == null,
+      needs_onboarding: !hasPaymentChannel(shop),
     };
   } catch {
     return null;
@@ -200,7 +201,7 @@ export const onboardTill = createServerFn({ method: "POST" })
     const session = await requireSession();
     const shop = await getShopOrThrow(session.shop_id);
 
-    const { channelId } = await registerPaymentChannel({
+    const { channelId, apiKey } = await registerPaymentChannel({
       channel_type: data.channel_type,
       short_code: data.short_code,
       account_number: data.account_number,
@@ -210,7 +211,8 @@ export const onboardTill = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("shops")
       .update({
-        payhero_channel_id: channelId,
+        payment_channel_id: channelId,
+        payment_api_key: apiKey,
         till_number: data.short_code,
         till_type: data.channel_type,
       })

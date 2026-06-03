@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSession, getShopOrThrow, computeSubscriptionStatus } from "./session.server";
-import { sendStkPush } from "./payhero.server";
+import { sendStkPush } from "./smartpay.server";
 
 const phoneSchema = z
   .string()
@@ -52,7 +52,7 @@ export const createSale = createServerFn({ method: "POST" })
     ) {
       throw new Error("PIN_REQUIRED");
     }
-    if (!shop.payhero_channel_id) {
+    if (!shop.payment_channel_id || !shop.payment_api_key) {
       throw new Error("Payment till not set up. Please complete onboarding.");
     }
 
@@ -137,14 +137,15 @@ export const createSale = createServerFn({ method: "POST" })
       const stk = await sendStkPush({
         amount: mpesaAmount,
         phone_number: data.customer_phone,
-        channel_id: shop.payhero_channel_id,
+        merchant_api_key: shop.payment_api_key,
         external_reference: reference,
+        description: `Sale ${sale.id}`,
       });
       await supabaseAdmin
         .from("sales")
         .update({
-          payhero_reference: reference,
-          payhero_checkout_request_id: stk.checkout_request_id,
+          payment_reference: reference,
+          payment_checkout_request_id: stk.checkout_request_id,
         })
         .eq("id", sale.id);
     } catch (e) {
