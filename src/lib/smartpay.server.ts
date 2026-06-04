@@ -1,4 +1,5 @@
 // SmartPayPesa API helpers. Server-only (do not import from client code).
+// Docs: https://api.smartpaypesa.com/v1
 
 const SMARTPAY_BASE_URL = "https://api.smartpaypesa.com/v1";
 
@@ -31,23 +32,13 @@ export interface RegisterChannelArgs {
   short_code: string;
   account_number?: string;
   description: string; // used as merchant key name
+  notify_phone?: string;
+  notify_email?: string;
 }
 
 export interface RegisterChannelResult {
   channelId: string; // SmartPay key id
   apiKey: string; // per-merchant API key
-}
-
-// Map our channel types to SmartPay destination methods.
-function mapDestinationMethod(channelType: RegisterChannelArgs["channel_type"]): string {
-  switch (channelType) {
-    case "till":
-      return "till";
-    case "paybill":
-      return "paybill";
-    case "bank":
-      return "bankpaybill";
-  }
 }
 
 async function smartpayFetch(
@@ -74,17 +65,39 @@ async function smartpayFetch(
     const msg =
       (json.error as string) ||
       (json.message as string) ||
-      (json.error_message as string) ||
+      (json.error_code as string) ||
       `SmartPay error ${res.status}`;
     throw new Error(msg);
   }
   return json;
 }
 
+function buildDestinationBody(args: RegisterChannelArgs): Record<string, unknown> {
+  const body: Record<string, unknown> = { callbackurl: getCallbackUrl() };
+  switch (args.channel_type) {
+    case "till":
+      body.method = "till";
+      body.till_number = args.short_code;
+      break;
+    case "paybill":
+      body.method = "paybill";
+      body.paybill_number = args.short_code;
+      body.account_number = args.account_number ?? "";
+      break;
+    case "bank":
+      // Map: short_code = bank_code, account_number = bank_account
+      body.method = "bankpaybill";
+      body.bank_code = args.short_code;
+      body.bank_account = args.account_number ?? "";
+      break;
+  }
+  return body;
+}
+
 export async function registerPaymentChannel(
   args: RegisterChannelArgs
 ): Promise<RegisterChannelResult> {
-  // 1) Create per-merchant key
+  // 1) Create per-merchant key (bootstrap key)
   const createRes = await smartpayFetch("/keys", {
     method: "POST",
     apiKey: bootstrapKey(),
@@ -99,28 +112,30 @@ export async function registerPaymentChannel(
     throw new Error("SmartPay did not return a valid merchant key");
   }
 
-  // 2) Set destination
-  const method = mapDestinationMethod(args.channel_type);
-  const destinationBody: Record<string, unknown> = {
-    method,
-    callbackurl: getCallbackUrl(),
-  };
-  if (method === "till") {
-    destinationBody.till_number = args.short_code;
-  } else if (method === "paybill" || method === "bankpaybill") {
-    destinationBody.paybill_number = args.short_code;
-    if (args.account_number) destinationBody.account_number = args.account_number;
-  }
+  // 2) Set payment destination (uses bootstrap key — manages keys)
+  await smartpayFetch(`/keys/${channelId}/destination`, {
+    method: "PUT",
+    apiKey: bootstrapKey(),
+    body: JSON.stringify(buildDestinationBody(args)),
+  });
 
-  try {
-    await smartpayFetch(`/keys/${channelId}/destination`, {
-      method: "PUT",
-      apiKey: bootstrapKey(),
-      body: JSON.stringify(destinationBody),
-    });
-  } catch (e) {
-    console.error("[smartpay:set_destination]", e);
-    throw e;
+  // 3) Optional notifications
+  if (args.notify_email || args.notify_phone) {
+    try {
+      await smartpayFetch(`/keys/${channelId}/notifications`, {
+        method: "PUT",
+        apiKey: bootstrapKey(),
+        body: JSON.stringify({
+          notify_email: args.notify_email ?? "",
+          notify_phone: args.notify_phone
+            ? formatKenyanPhone(args.notify_phone)
+            : "",
+        }),
+      });
+    } catch (e) {
+      // Non-fatal — destination is set, payments will still work.
+      console.warn("[smartpay:notifications]", e);
+    }
   }
 
   return { channelId, apiKey };
@@ -148,9 +163,9 @@ export async function sendStkPush(args: StkPushArgs): Promise<StkPushResult> {
     apiKey: args.merchant_api_key,
     body: JSON.stringify({
       phone: formatted,
-      amount: args.amount,
+      amount: Math.round(args.amount),
       account_reference: args.external_reference,
-      description: args.description ?? "Payment",
+      description: args.description ?? "SmartPay Payment",
     }),
   });
 

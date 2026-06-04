@@ -206,6 +206,7 @@ export const onboardTill = createServerFn({ method: "POST" })
       short_code: data.short_code,
       account_number: data.account_number,
       description: `${shop.shop_name} (${shop.phone})`,
+      notify_phone: shop.phone,
     });
 
     const { error } = await supabaseAdmin
