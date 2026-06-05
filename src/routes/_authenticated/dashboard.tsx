@@ -124,28 +124,35 @@ function DashboardPage() {
 
       {data.low_stock.length > 0 && (
         <section className="mb-6">
-          <div className="flex items-center text-sm font-semibold text-foreground mb-2">
-            <AlertTriangle className="h-4 w-4 mr-1 text-destructive" />
-            Low stock ({data.low_stock.length})
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center text-sm font-semibold text-foreground">
+              <AlertTriangle className="h-4 w-4 mr-1.5 text-destructive" />
+              Low stock ({data.low_stock.length})
+            </div>
+            <Link to="/products" className="text-xs font-medium text-primary hover:underline">
+              View all
+            </Link>
           </div>
-          <div className="space-y-2">
+          <div className="grid sm:grid-cols-2 gap-2">
             {data.low_stock.map((p) => (
               <Link
                 key={p.id}
                 to="/products"
-                className="block bg-card border border-border border-l-4 border-l-destructive rounded-xl p-3"
+                className="flex items-center gap-3 bg-card border border-border border-l-4 border-l-destructive rounded-xl p-3 shadow-[var(--shadow-card)] hover:border-l-destructive hover:bg-muted/40 transition-colors"
               >
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{p.name}</span>
-                  <span className="text-sm text-destructive font-semibold">
-                    {p.stock} left
-                  </span>
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+                  <Package className="h-4 w-4" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{p.name}</div>
+                  <div className="text-xs text-destructive font-semibold">{p.stock} left</div>
                 </div>
               </Link>
             ))}
           </div>
         </section>
       )}
+
 
       {expired && (
         <div className="fixed inset-0 bg-black/60 z-40 flex items-center justify-center px-4 pb-20">
