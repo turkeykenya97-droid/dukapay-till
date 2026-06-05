@@ -204,7 +204,7 @@ function ProfilePage() {
         {isTrialActive && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
             <p className="text-sm text-blue-900">
-              You're on a free trial with full access to all features. Start your subscription after the trial ends.
+              You're on a free trial with full access to all features. You can start a paid subscription anytime below, or wait until your trial ends.
             </p>
           </div>
         )}
@@ -215,7 +215,11 @@ function ProfilePage() {
           variant="outline"
         >
           <CreditCard className="h-4 w-4 mr-2" />
-          {renewalMutation.isPending ? "Sending…" : "Renew Subscription"}
+          {renewalMutation.isPending 
+            ? "Sending…" 
+            : isTrialActive 
+            ? "Start Subscription" 
+            : "Renew Subscription"}
         </Button>
       </div>
 
@@ -339,7 +343,7 @@ function ProfilePage() {
                 </div>
               )}
 
-              {profile.plan !== plan.id && profile.subscription_status !== "trial" && (
+              {profile.plan !== plan.id && (
                 <Button
                   className="w-full"
                   variant={plan.id === "pro" ? "default" : "outline"}
@@ -349,7 +353,11 @@ function ProfilePage() {
                   }}
                   disabled={renewalMutation.isPending}
                 >
-                  {renewalMutation.isPending && selectedPlan === plan.id ? "Processing…" : `Upgrade to ${plan.name}`}
+                  {renewalMutation.isPending && selectedPlan === plan.id 
+                    ? "Processing…" 
+                    : isTrialActive
+                    ? `Start ${plan.name} Plan Now`
+                    : `Upgrade to ${plan.name}`}
                 </Button>
               )}
             </div>

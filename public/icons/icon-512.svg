@@ -1,0 +1,49 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .dukapos-bg { fill: #16a34a; }
+      .dukapos-icon { fill: #ffffff; }
+    </style>
+  </defs>
+  <!-- Background -->
+  <rect class="dukapos-bg" width="512" height="512" rx="100"/>
+  
+  <!-- Till/POS icon (simplified shopping register) -->
+  <g transform="translate(128, 100)">
+    <!-- Till machine body -->
+    <rect class="dukapos-icon" x="32" y="50" width="192" height="160" rx="12" fill="#ffffff" opacity="0.9"/>
+    
+    <!-- Screen -->
+    <rect class="dukapos-icon" x="48" y="70" width="160" height="60" rx="6" fill="#16a34a" opacity="0.3"/>
+    
+    <!-- Amount display -->
+    <text x="128" y="105" font-family="Arial" font-size="32" font-weight="bold" text-anchor="middle" fill="#16a34a" opacity="0.6">0</text>
+    
+    <!-- Number pad -->
+    <g font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle">
+      <!-- Row 1 -->
+      <circle class="dukapos-icon" cx="60" cy="155" r="16" opacity="0.8"/>
+      <text x="60" y="162" fill="#16a34a">1</text>
+      
+      <circle class="dukapos-icon" cx="128" cy="155" r="16" opacity="0.8"/>
+      <text x="128" y="162" fill="#16a34a">2</text>
+      
+      <circle class="dukapos-icon" cx="196" cy="155" r="16" opacity="0.8"/>
+      <text x="196" y="162" fill="#16a34a">3</text>
+      
+      <!-- Row 2 -->
+      <circle class="dukapos-icon" cx="60" cy="195" r="16" opacity="0.8"/>
+      <text x="60" y="202" fill="#16a34a">4</text>
+      
+      <circle class="dukapos-icon" cx="128" cy="195" r="16" opacity="0.8"/>
+      <text x="128" y="202" fill="#16a34a">5</text>
+      
+      <circle class="dukapos-icon" cx="196" cy="195" r="16" opacity="0.8"/>
+      <text x="196" y="202" fill="#16a34a">6</text>
+    </g>
+  </g>
+
+  <!-- M-Pesa indicator -->
+  <circle cx="420" cy="92" r="45" fill="#f59e0b" opacity="0.9"/>
+  <text x="420" y="103" font-family="Arial" font-size="40" font-weight="bold" text-anchor="middle" fill="#ffffff">M</text>
+</svg>

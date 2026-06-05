@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 
@@ -72,24 +73,34 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "DukaPOS: Shop Smart is a web app for Kenyan small shop owners to manage inventory, sales, and payments." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "DukaPOS: Shop Smart is a web app for Kenyan small shop owners to manage inventory, sales, and payments." },
+      { title: "DukaPOS" },
+      { name: "description", content: "DukaPOS: M-Pesa POS system for Kenyan merchants" },
+      { name: "author", content: "DukaPay" },
+      { property: "og:title", content: "DukaPOS" },
+      { property: "og:description", content: "DukaPOS: M-Pesa POS system for Kenyan merchants" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Lovable App" },
-      { name: "twitter:description", content: "DukaPOS: Shop Smart is a web app for Kenyan small shop owners to manage inventory, sales, and payments." },
+      { name: "twitter:site", content: "@DukaPay" },
+      { name: "twitter:title", content: "DukaPOS" },
+      { name: "twitter:description", content: "DukaPOS: M-Pesa POS system for Kenyan merchants" },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c4e44fe6-2399-4ffe-9bfc-0a9ab05c7d0a/id-preview-41f33c6f--c5eacb4c-0b92-46cd-a0cb-6edf8245cd2b.lovable.app-1779544538492.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c4e44fe6-2399-4ffe-9bfc-0a9ab05c7d0a/id-preview-41f33c6f--c5eacb4c-0b92-46cd-a0cb-6edf8245cd2b.lovable.app-1779544538492.png" },
+      // PWA meta tags
+      { name: "theme-color", content: "#16a34a" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "DukaPOS" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
+      // PWA manifest and icons
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "apple-touch-icon", href: "/icons/icon-192.svg" },
+      { rel: "icon", href: "/icons/icon-192.svg", type: "image/svg+xml" },
     ],
   }),
   shellComponent: RootShell,
@@ -114,6 +125,60 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    // Register service worker for offline support
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((reg) => {
+            console.log("[PWA] Service Worker registered:", reg);
+            // Check for updates periodically
+            setInterval(() => {
+              reg.update();
+            }, 60000);
+          })
+          .catch((err) => {
+            console.log("[PWA] Service Worker registration failed:", err);
+          });
+      });
+    }
+
+    // Handle app install prompt
+    let deferredPrompt: any = null;
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log("[PWA] Install prompt is available");
+      // Dispatch custom event to show install button
+      window.dispatchEvent(
+        new CustomEvent("pwa-install-prompt-ready", { detail: { prompt: deferredPrompt } })
+      );
+    };
+
+    const handleAppInstalled = () => {
+      console.log("[PWA] App was installed");
+      deferredPrompt = null;
+      window.dispatchEvent(new Event("pwa-app-installed"));
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    // Handle SW controller change (new version available)
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("controller", (event) => {
+        console.log("[PWA] New service worker is controlling the page");
+      });
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -1,0 +1,32 @@
+<svg viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .dukapos-bg { fill: #16a34a; }
+      .dukapos-icon { fill: #ffffff; }
+    </style>
+  </defs>
+  <!-- Background -->
+  <rect class="dukapos-bg" width="192" height="192" rx="40"/>
+  
+  <!-- Till/POS icon (simplified shopping register) -->
+  <g transform="translate(48, 40)">
+    <!-- Till machine body -->
+    <rect class="dukapos-icon" x="12" y="20" width="72" height="60" rx="4" fill="#ffffff" opacity="0.9"/>
+    
+    <!-- Screen -->
+    <rect class="dukapos-icon" x="18" y="26" width="60" height="24" rx="2" fill="#16a34a" opacity="0.3"/>
+    
+    <!-- Number pad -->
+    <g font-family="Arial" font-size="8" font-weight="bold" text-anchor="middle">
+      <text class="dukapos-icon" x="25" y="60">1</text>
+      <text class="dukapos-icon" x="45" y="60">2</text>
+      <text class="dukapos-icon" x="65" y="60">3</text>
+      <text class="dukapos-icon" x="25" y="74">4</text>
+      <text class="dukapos-icon" x="45" y="74">5</text>
+      <text class="dukapos-icon" x="65" y="74">6</text>
+    </g>
+  </g>
+
+  <!-- Ksh currency symbol in corner -->
+  <text x="156" y="156" font-family="Arial" font-size="24" font-weight="bold" fill="#ffffff" opacity="0.8">₩</text>
+</svg>

@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getCurrentShop, logout } from "@/lib/auth.functions";
 import { LayoutDashboard, Package, History, LogOut, ShoppingCart, BarChart3, User, CreditCard } from "lucide-react";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -120,6 +121,9 @@ function AuthenticatedLayout() {
           </button>
         </div>
       </nav>
+      
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 }

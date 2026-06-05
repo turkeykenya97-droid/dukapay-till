@@ -64,14 +64,22 @@ function SubscriptionPage() {
       </p>
 
       {/* Current Status */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+      <div className={`rounded-lg p-4 mb-8 border-2 ${
+        isTrialActive 
+          ? "bg-blue-50 border-blue-200" 
+          : "bg-green-50 border-green-200"
+      }`}>
         <div className="flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
+            isTrialActive ? "text-blue-600" : "text-green-600"
+          }`} />
           <div>
-            <p className="font-semibold text-blue-900">Current Status</p>
-            <p className="text-sm text-blue-800">
+            <p className={`font-semibold ${isTrialActive ? "text-blue-900" : "text-green-900"}`}>
+              {isTrialActive ? "Free Trial Active" : "Subscription Active"}
+            </p>
+            <p className={`text-sm ${isTrialActive ? "text-blue-800" : "text-green-800"}`}>
               {isTrialActive
-                ? `Trial ${profile.days_remaining} days remaining - expires ${fmtDate(profile.subscription_expiry)}`
+                ? `You have ${profile.days_remaining} days remaining. You can upgrade to a paid plan anytime below - your subscription will start immediately.`
                 : `${isBasic ? "Basic Plan" : "Pro Plan"} - ${profile.days_remaining} days remaining - renews ${fmtDate(profile.subscription_expiry)}`}
             </p>
           </div>
@@ -158,7 +166,7 @@ function SubscriptionPage() {
                     {renewalMutation.isPending && selectedPlan === plan.id
                       ? "Processing…"
                       : isTrialActive
-                      ? `Upgrade to ${plan.name}`
+                      ? `Start ${plan.name} Plan Now`
                       : `Switch to ${plan.name}`}
                   </Button>
                 )}
