@@ -6,7 +6,7 @@ import { getDashboard } from "@/lib/sales.functions";
 import { initiateRenewal } from "@/lib/subscription.functions";
 import { Button } from "@/components/ui/button";
 import { fmtKsh } from "@/lib/format";
-import { ShoppingCart, AlertTriangle, TrendingUp, Receipt, Calculator, Plus, History, CreditCard } from "lucide-react";
+import { ShoppingCart, AlertTriangle, TrendingUp, Receipt, BarChart3, Plus, History, Package } from "lucide-react";
 
 const dashboardQuery = queryOptions({
   queryKey: ["dashboard"],
