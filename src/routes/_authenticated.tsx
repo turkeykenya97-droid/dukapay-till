@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getCurrentShop, logout } from "@/lib/auth.functions";
-import { LayoutDashboard, Package, History, LogOut, ShoppingCart, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Package, History, LogOut, ShoppingCart, BarChart3, User } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -38,6 +38,7 @@ function AuthenticatedLayout() {
     { to: "/sell", label: "Sell", icon: ShoppingCart },
     { to: "/history", label: "History", icon: History },
     { to: "/analytics", label: "Analytics", icon: BarChart3 },
+    { to: "/profile", label: "Profile", icon: User },
   ] as const;
 
   if (!showNav) {

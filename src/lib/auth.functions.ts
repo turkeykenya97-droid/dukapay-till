@@ -4,7 +4,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { signShopJwt, SESSION_COOKIE } from "./jwt.server";
-import { getSessionPayload, getShopOrThrow, requireSession } from "./session.server";
+import { getSessionPayload, getShopOrThrow, requireSession, computeSubscriptionStatus } from "./session.server";
 import { registerPaymentChannel } from "./smartpay.server";
 import { hasPaymentChannel } from "./session.server";
 
@@ -261,11 +261,13 @@ export async function checkTransactionLimit(shopId: string): Promise<{
   await resetTransactionCountIfNeeded(shopId);
   const shop = await getShopOrThrow(shopId);
 
-  if (shop.plan === "pro") {
+  // Trial and Pro users have unlimited transactions
+  const status = computeSubscriptionStatus(shop.subscription_expiry);
+  if (shop.plan === "pro" || status === "trial") {
     return { canSend: true };
   }
 
-  // Basic plan: 150 transactions per month
+  // Basic plan (after trial): 150 transactions per month
   const BASIC_LIMIT = 150;
   const remaining = BASIC_LIMIT - shop.transaction_count;
 
@@ -314,4 +316,128 @@ export const getPlanInfo = createServerFn({ method: "GET" }).handler(async () =>
   } catch {
     return null;
   }
+});
+
+/**
+ * Get complete user profile with all details
+ */
+export const getProfile = createServerFn({ method: "GET" }).handler(async () => {
+  const session = await requireSession();
+  const shop = await getShopOrThrow(session.shop_id);
+
+  const status = computeSubscriptionStatus(shop.subscription_expiry);
+  const days_remaining = Math.max(
+    0,
+    Math.ceil(
+      (new Date(shop.subscription_expiry).getTime() - Date.now()) /
+        (24 * 60 * 60 * 1000)
+    )
+  );
+
+  return {
+    id: shop.id,
+    owner_name: shop.owner_name,
+    shop_name: shop.shop_name,
+    phone: shop.phone,
+    plan: shop.plan,
+    subscription_status: status,
+    subscription_expiry: shop.subscription_expiry,
+    days_remaining,
+    till_number: shop.till_number,
+    till_type: shop.till_type,
+    payment_channel_id: shop.payment_channel_id,
+    created_at: shop.created_at,
+    transaction_count: shop.transaction_count,
+    transaction_reset_date: shop.transaction_reset_date,
+  };
+});
+
+const updatePasswordSchema = z.object({
+  current_password: z.string().min(1),
+  new_password: z.string().min(6).max(128),
+  confirm_password: z.string().min(6).max(128),
+});
+
+/**
+ * Change user password
+ */
+export const changePassword = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => updatePasswordSchema.parse(d))
+  .handler(async ({ data }) => {
+    const session = await requireSession();
+    const shopId = session.shop_id;
+
+    if (data.new_password !== data.confirm_password) {
+      throw new Error("New passwords don't match");
+    }
+
+    const { data: shop, error } = await supabaseAdmin
+      .from("shops")
+      .select("password_hash")
+      .eq("id", shopId)
+      .single();
+
+    if (error || !shop) {
+      throw new Error("Unable to verify current password");
+    }
+
+    const ok = await bcrypt.compare(data.current_password, shop.password_hash);
+    if (!ok) {
+      throw new Error("Current password is incorrect");
+    }
+
+    const new_password_hash = await bcrypt.hash(data.new_password, 12);
+    const { error: updateErr } = await supabaseAdmin
+      .from("shops")
+      .update({ password_hash: new_password_hash })
+      .eq("id", shopId);
+
+    if (updateErr) {
+      console.error("[changePassword]", updateErr);
+      throw new Error("Failed to update password");
+    }
+
+    return { ok: true };
+  });
+
+/**
+ * Get available subscription plans and pricing
+ */
+export const getPlans = createServerFn({ method: "GET" }).handler(async () => {
+  return {
+    plans: [
+      {
+        id: "basic",
+        name: "Basic",
+        price: 299,
+        description: "Perfect for small shops",
+        features: [
+          "M-Pesa STK Push",
+          "Calculator",
+          "150 transactions/month",
+          "Basic support",
+        ],
+        limitations: [
+          "No analytics",
+          "No stock management",
+          "No receipts",
+        ],
+      },
+      {
+        id: "pro",
+        name: "Pro",
+        price: 499,
+        description: "For growing businesses",
+        features: [
+          "Unlimited transactions",
+          "Full analytics & reporting",
+          "Advanced stock management",
+          "Digital & printed receipts",
+          "Priority support",
+        ],
+        limitations: [],
+      },
+    ],
+    subscription_amount: Number(process.env.SUBSCRIPTION_AMOUNT ?? 499),
+  };
 });

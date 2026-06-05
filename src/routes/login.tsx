@@ -37,7 +37,16 @@ function LoginPage() {
     },
     onError: (e: Error) => {
       console.error("[login error]", e);
-      toast.error(e.message || "Login failed. Please try again.");
+      let message = e.message || "Login failed. Please try again.";
+      // Parse validation errors
+      try {
+        if (message.includes("Phone must be 10 digits")) {
+          message = "Phone must be 10 digits starting with 0 (e.g., 0712345678)";
+        } else if (message.includes("Invalid phone")) {
+          message = "Invalid phone number or password";
+        }
+      } catch {}
+      toast.error(message);
     },
   });
 
@@ -46,6 +55,10 @@ function LoginPage() {
     console.log("[login] Form submitted");
     if (!phone || !password) {
       toast.error("Please enter phone and password");
+      return;
+    }
+    if (!/^0\d{9}$/.test(phone)) {
+      toast.error("Phone must be 10 digits starting with 0 (e.g., 0712345678)");
       return;
     }
     mutation.mutate();
@@ -73,15 +86,21 @@ function LoginPage() {
                 inputMode="tel"
                 placeholder="07XX XXX XXX"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                  setPhone(val);
+                }}
+                maxLength={10}
                 required
               />
+              <p className="text-xs text-muted-foreground">Enter 10-digit phone starting with 0</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

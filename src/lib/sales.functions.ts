@@ -279,7 +279,9 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
     )
   );
 
-  const transactionRemaining = freshShop.plan === "pro" ? null : 150 - freshShop.transaction_count;
+  // During trial, show trial status; after trial, show plan (basic/pro)
+  const displayStatus = status === "trial" ? "trial" : shop.plan;
+  const transactionRemaining = displayStatus === "pro" || status === "trial" ? null : 150 - freshShop.transaction_count;
 
   return {
     shop: {
@@ -287,9 +289,10 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
       shop_name: shop.shop_name,
       owner_name: shop.owner_name,
       subscription_status: status,
+      display_status: displayStatus,
       days_remaining,
       subscription_expiry: shop.subscription_expiry,
-      plan: freshShop.plan,
+      plan: shop.plan,
       transactionCount: freshShop.transaction_count,
       transactionRemaining,
     },
@@ -302,8 +305,9 @@ export const getAnalytics = createServerFn({ method: "GET" }).handler(async () =
   const s = await requireSession();
   const shop = await getShopOrThrow(s.shop_id);
 
-  // Feature gate: Analytics only for Pro plan
-  if (shop.plan === "basic") {
+  // Feature gate: Analytics available for Pro plan or Trial users
+  const status = computeSubscriptionStatus(shop.subscription_expiry);
+  if (shop.plan === "basic" && status !== "trial") {
     throw new Error("UPGRADE_REQUIRED");
   }
 

@@ -84,7 +84,7 @@ function DashboardPage() {
             <ShoppingCart className="h-3.5 w-3.5 mr-1" />
             Plan
           </div>
-          <div className="text-2xl font-bold capitalize">{data.shop.subscription_status}</div>
+          <div className="text-2xl font-bold capitalize">{data.shop.display_status}</div>
         </div>
       </div>
 
