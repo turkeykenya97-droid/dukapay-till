@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getProfile, changePassword, getPlans } from "@/lib/auth.functions";
+import { getProfile, changePassword, getPlans, updateTillSettings } from "@/lib/auth.functions";
 import { initiateRenewal } from "@/lib/subscription.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,8 +55,13 @@ function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const [editTillOpen, setEditTillOpen] = useState(false);
+  const [tillType, setTillType] = useState(profile?.till_type || "till");
+  const [tillNumber, setTillNumber] = useState(profile?.till_number || "");
+
   const changePwd = useServerFn(changePassword);
   const renew = useServerFn(initiateRenewal);
+  const updateTill = useServerFn(updateTillSettings);
 
   const passwordMutation = useMutation({
     mutationFn: () =>
@@ -83,6 +88,19 @@ function ProfilePage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const tillMutation = useMutation({
+    mutationFn: () =>
+      updateTill({
+        data: { till_type: tillType as "paybill" | "till" | "bank", till_number: tillNumber },
+      }),
+    onSuccess: () => {
+      toast.success("Till settings updated successfully");
+      setEditTillOpen(false);
+      qc.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const handleChangePassword = () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast.error("Please fill in all password fields");
@@ -97,6 +115,22 @@ function ProfilePage() {
       return;
     }
     passwordMutation.mutate();
+  };
+
+  const handleSaveTill = () => {
+    if (!tillNumber.trim()) {
+      toast.error("Please enter a till number");
+      return;
+    }
+    if (!/^\d+$/.test(tillNumber.trim())) {
+      toast.error("Till number must contain only digits");
+      return;
+    }
+    if (tillNumber.trim().length < 4) {
+      toast.error("Till number must be at least 4 digits");
+      return;
+    }
+    tillMutation.mutate();
   };
 
   const isTrialActive = profile.subscription_status === "trial";
@@ -115,7 +149,7 @@ function ProfilePage() {
               <h2 className="text-lg font-semibold">Account Details</h2>
             </div>
           </div>
-          <PlanBadge plan={isTrialActive ? "basic" : (profile.plan as "basic" | "pro")} />
+          <PlanBadge plan={isTrialActive ? "trial" : (profile.plan as "basic" | "pro")} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -181,15 +215,26 @@ function ProfilePage() {
       {/* Till Information */}
       {profile.till_number && (
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Package className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Payment Till</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold">Payment Till</h2>
+            </div>
+            <Button onClick={() => {
+              setTillType(profile.till_type || "till");
+              setTillNumber(profile.till_number || "");
+              setEditTillOpen(true);
+            }} variant="outline" size="sm">
+              Edit
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-muted-foreground mb-1">Till Type</p>
-              <p className="text-sm font-medium capitalize">{profile.till_type}</p>
+              <p className="text-sm font-medium">
+                {profile.till_type === "paybill" ? "PayBill" : profile.till_type?.charAt(0).toUpperCase() + profile.till_type?.slice(1)}
+              </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Till Number</p>
@@ -364,6 +409,50 @@ function ProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Till Settings Dialog */}
+      <Dialog open={editTillOpen} onOpenChange={setEditTillOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Update Payment Till</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="till-type">Till Type</Label>
+              <select
+                id="till-type"
+                value={tillType}
+                onChange={(e) => setTillType(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+              >
+                <option value="till">Till</option>
+                <option value="paybill">PayBill</option>
+                <option value="bank">Bank</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="till-number">Till Number</Label>
+              <Input
+                id="till-number"
+                type="text"
+                inputMode="numeric"
+                value={tillNumber}
+                onChange={(e) => setTillNumber(e.target.value.replace(/\D/g, ""))}
+                placeholder="Enter till number (4-10 digits)"
+              />
+              <p className="text-xs text-muted-foreground">Must be 4-10 digits</p>
+            </div>
+            <Button
+              onClick={handleSaveTill}
+              disabled={tillMutation.isPending}
+              className="w-full"
+            >
+              {tillMutation.isPending ? "Saving…" : "Save Till Settings"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+

@@ -441,3 +441,44 @@ export const getPlans = createServerFn({ method: "GET" }).handler(async () => {
     subscription_amount: Number(process.env.SUBSCRIPTION_AMOUNT ?? 499),
   };
 });
+
+/**
+ * Update till settings for a shop
+ */
+export const updateTillSettings = createServerFn({ method: "POST" }).handler(
+  async (
+    opts: Parameters<typeof createServerFn<{ method: "POST" }>>[0] & {
+      data: {
+        till_type: "paybill" | "till" | "bank";
+        till_number: string;
+      };
+    }
+  ) => {
+    const s = await requireSession();
+    const { till_type, till_number } = opts.data;
+
+    // Validate till number format (should be numeric)
+    if (!/^\d+$/.test(till_number.trim())) {
+      throw new Error("Till number must contain only digits");
+    }
+
+    if (till_number.trim().length < 4) {
+      throw new Error("Till number must be at least 4 digits");
+    }
+
+    const { error } = await supabaseAdmin
+      .from("shops")
+      .update({
+        till_type,
+        till_number: till_number.trim(),
+      })
+      .eq("id", s.shop_id);
+
+    if (error) {
+      console.error("[updateTillSettings]", error);
+      throw new Error("Failed to update till settings");
+    }
+
+    return { ok: true };
+  }
+);

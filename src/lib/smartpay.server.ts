@@ -144,7 +144,6 @@ export async function registerPaymentChannel(
 export interface StkPushArgs {
   amount: number;
   phone_number: string;
-  merchant_api_key: string; // per-merchant key
   external_reference: string;
   description?: string;
 }

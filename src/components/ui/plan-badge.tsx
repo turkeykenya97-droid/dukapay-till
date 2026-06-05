@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Zap } from "lucide-react";
 
 interface PlanBadgeProps {
-  plan: "basic" | "pro";
+  plan: "basic" | "pro" | "trial";
   transactionRemaining?: number | null;
   className?: string;
 }
@@ -14,19 +14,24 @@ export function PlanBadge({
 }: PlanBadgeProps) {
   const isBasic = plan === "basic";
   const isPro = plan === "pro";
+  const isTrial = plan === "trial";
+
+  const badgeLabel = isTrial ? "Trial" : plan.charAt(0).toUpperCase() + plan.slice(1);
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Badge
-        variant={isPro ? "default" : "secondary"}
+        variant={isPro || isTrial ? "default" : "secondary"}
         className={
           isPro
             ? "bg-yellow-500/20 text-yellow-700 border-yellow-200"
+            : isTrial
+            ? "bg-blue-500/20 text-blue-700 border-blue-200"
             : "bg-slate-100 text-slate-700"
         }
       >
-        {isPro && <Zap className="h-3 w-3 mr-1" />}
-        <span className="capitalize font-medium">{plan} Plan</span>
+        {(isPro || isTrial) && <Zap className="h-3 w-3 mr-1" />}
+        <span className="font-medium">{badgeLabel} Plan</span>
       </Badge>
 
       {isBasic && transactionRemaining !== null && (
@@ -35,7 +40,7 @@ export function PlanBadge({
         </span>
       )}
 
-      {isPro && (
+      {(isPro || isTrial) && (
         <span className="text-xs text-muted-foreground">Unlimited transactions</span>
       )}
     </div>

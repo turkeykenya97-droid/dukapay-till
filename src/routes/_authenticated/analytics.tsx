@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/analytics")({
           <UpgradePrompt
             feature="Analytics"
             description="Get detailed insights into your sales patterns, top products, and customer trends with pro features."
-            onUpgradeClick={() => navigate({ to: "/subscription" })}
+            onUpgradeClick={() => navigate({ to: "/profile" })}
           />
         </div>
       );

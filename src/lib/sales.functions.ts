@@ -145,7 +145,6 @@ export const createSale = createServerFn({ method: "POST" })
       const stk = await sendStkPush({
         amount: mpesaAmount,
         phone_number: data.customer_phone,
-        merchant_api_key: shop.payment_api_key,
         external_reference: reference,
         description: `Sale ${sale.id}`,
       });
@@ -281,7 +280,7 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
 
   // During trial, show trial status; after trial, show plan (basic/pro)
   const displayStatus = status === "trial" ? "trial" : shop.plan;
-  const transactionRemaining = displayStatus === "pro" || status === "trial" ? null : 150 - freshShop.transaction_count;
+  const transactionRemaining = shop.plan === "pro" || status === "trial" ? null : 150 - freshShop.transaction_count;
 
   return {
     shop: {
