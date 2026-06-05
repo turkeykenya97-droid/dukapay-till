@@ -63,7 +63,7 @@ function AuthenticatedLayout() {
 
   const initials = shop.shop_name
     .split(/\s+/)
-    .map((w) => w[0])
+    .map((w: string) => w[0])
     .filter(Boolean)
     .slice(0, 2)
     .join("")
