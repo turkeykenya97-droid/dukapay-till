@@ -58,6 +58,7 @@ function ProfilePage() {
   const [editTillOpen, setEditTillOpen] = useState(false);
   const [tillType, setTillType] = useState(profile?.till_type || "till");
   const [tillNumber, setTillNumber] = useState(profile?.till_number || "");
+  const [selectedPlan, setSelectedPlan] = useState<"basic" | "pro" | null>(null);
 
   const changePwd = useServerFn(changePassword);
   const renew = useServerFn(initiateRenewal);
@@ -80,9 +81,11 @@ function ProfilePage() {
   });
 
   const renewalMutation = useMutation({
-    mutationFn: () => renew({ data: undefined }),
+    mutationFn: (plan: "basic" | "pro") =>
+      renew({ data: { plan } }),
     onSuccess: () => {
       toast.success("M-Pesa prompt sent. Approve on your phone.");
+      setSelectedPlan(null);
       qc.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -206,7 +209,11 @@ function ProfilePage() {
           </div>
         )}
 
-        <Button onClick={() => renewalMutation.mutate()} disabled={renewalMutation.isPending} variant="outline">
+        <Button 
+          onClick={() => renewalMutation.mutate(profile.plan as "basic" | "pro")} 
+          disabled={renewalMutation.isPending} 
+          variant="outline"
+        >
           <CreditCard className="h-4 w-4 mr-2" />
           {renewalMutation.isPending ? "Sending…" : "Renew Subscription"}
         </Button>
@@ -336,10 +343,13 @@ function ProfilePage() {
                 <Button
                   className="w-full"
                   variant={plan.id === "pro" ? "default" : "outline"}
-                  onClick={() => renewalMutation.mutate()}
+                  onClick={() => {
+                    setSelectedPlan(plan.id as "basic" | "pro");
+                    renewalMutation.mutate(plan.id as "basic" | "pro");
+                  }}
                   disabled={renewalMutation.isPending}
                 >
-                  Upgrade to {plan.name}
+                  {renewalMutation.isPending && selectedPlan === plan.id ? "Processing…" : `Upgrade to ${plan.name}`}
                 </Button>
               )}
             </div>

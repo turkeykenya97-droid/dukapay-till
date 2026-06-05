@@ -61,9 +61,25 @@ export async function getShopOrThrow(shopId: string): Promise<ShopRecord> {
 }
 
 export function computeSubscriptionStatus(
-  expiry: string
+  expiry: string,
+  trialStart?: string
 ): "trial" | "active" | "expired" {
   const exp = new Date(expiry).getTime();
   if (Number.isNaN(exp)) return "expired";
-  return exp > Date.now() ? "active" : "expired";
+  
+  const now = Date.now();
+  
+  // If trial_start is provided and we're still within TRIAL_DAYS of it, it's trial
+  if (trialStart) {
+    const TRIAL_DAYS = Number(process.env.TRIAL_DAYS ?? 30);
+    const trialStart_ms = new Date(trialStart).getTime();
+    const trialEnd_ms = trialStart_ms + TRIAL_DAYS * 24 * 60 * 60 * 1000;
+    
+    if (now < trialEnd_ms) {
+      return "trial";
+    }
+  }
+  
+  // After trial period or if no trial_start, check expiry
+  return exp > now ? "active" : "expired";
 }

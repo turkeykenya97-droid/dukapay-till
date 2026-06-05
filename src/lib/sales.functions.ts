@@ -269,7 +269,7 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
     (p) => p.stock <= p.reorder_level
   );
 
-  const status = computeSubscriptionStatus(shop.subscription_expiry);
+  const status = computeSubscriptionStatus(shop.subscription_expiry, shop.trial_start);
   const days_remaining = Math.max(
     0,
     Math.ceil(
@@ -305,7 +305,7 @@ export const getAnalytics = createServerFn({ method: "GET" }).handler(async () =
   const shop = await getShopOrThrow(s.shop_id);
 
   // Feature gate: Analytics available for Pro plan or Trial users
-  const status = computeSubscriptionStatus(shop.subscription_expiry);
+  const status = computeSubscriptionStatus(shop.subscription_expiry, shop.trial_start);
   if (shop.plan === "basic" && status !== "trial") {
     throw new Error("UPGRADE_REQUIRED");
   }

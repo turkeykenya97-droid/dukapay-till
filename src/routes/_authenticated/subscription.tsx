@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { queryOptions, useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
 import { getProfile, getPlans } from "@/lib/auth.functions";
 import { initiateRenewal } from "@/lib/subscription.functions";
@@ -35,13 +36,15 @@ function SubscriptionPage() {
   const { data: profile } = useSuspenseQuery(profileQuery);
   const { data: plansData } = useSuspenseQuery(plansQuery);
   const qc = useQueryClient();
+  const [selectedPlan, setSelectedPlan] = useState<"basic" | "pro" | null>(null);
 
   const renew = useServerFn(initiateRenewal);
 
   const renewalMutation = useMutation({
-    mutationFn: () => renew({ data: undefined }),
+    mutationFn: (plan: "basic" | "pro") => renew({ data: { plan } }),
     onSuccess: () => {
       toast.success("M-Pesa prompt sent. Approve on your phone.");
+      setSelectedPlan(null);
       qc.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -144,15 +147,18 @@ function SubscriptionPage() {
                   </div>
                 ) : (
                   <Button
-                    onClick={() => renewalMutation.mutate()}
-                    disabled={renewalMutation.isPending || isTrialActive}
+                    onClick={() => {
+                      setSelectedPlan(plan.id as "basic" | "pro");
+                      renewalMutation.mutate(plan.id as "basic" | "pro");
+                    }}
+                    disabled={renewalMutation.isPending}
                     variant={plan.id === "pro" ? "default" : "outline"}
                     className="w-full"
                   >
-                    {renewalMutation.isPending
+                    {renewalMutation.isPending && selectedPlan === plan.id
                       ? "Processing…"
                       : isTrialActive
-                      ? "Upgrade on Trial End"
+                      ? `Upgrade to ${plan.name}`
                       : `Switch to ${plan.name}`}
                   </Button>
                 )}

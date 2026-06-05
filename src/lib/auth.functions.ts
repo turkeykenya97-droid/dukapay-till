@@ -61,6 +61,9 @@ export const registerShop = createServerFn({ method: "POST" })
 
     const password_hash = await bcrypt.hash(data.password, 12);
     const pin_hash = await bcrypt.hash(data.pin, 12);
+    
+    const now = new Date();
+    const trial_start = now.toISOString();
     const subscription_expiry = new Date(
       Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000
     ).toISOString();
@@ -73,6 +76,7 @@ export const registerShop = createServerFn({ method: "POST" })
         phone: data.phone,
         password_hash,
         pin_hash,
+        trial_start,
         subscription_expiry,
         subscription_status: "trial",
         plan: "basic",
@@ -262,7 +266,7 @@ export async function checkTransactionLimit(shopId: string): Promise<{
   const shop = await getShopOrThrow(shopId);
 
   // Trial and Pro users have unlimited transactions
-  const status = computeSubscriptionStatus(shop.subscription_expiry);
+  const status = computeSubscriptionStatus(shop.subscription_expiry, shop.trial_start);
   if (shop.plan === "pro" || status === "trial") {
     return { canSend: true };
   }
@@ -306,12 +310,14 @@ export const getPlanInfo = createServerFn({ method: "GET" }).handler(async () =>
     await resetTransactionCountIfNeeded(session.shop_id);
 
     const refreshedShop = await getShopOrThrow(session.shop_id);
-    const remaining = refreshedShop.plan === "pro" ? null : 150 - refreshedShop.transaction_count;
+    const status = computeSubscriptionStatus(refreshedShop.subscription_expiry, refreshedShop.trial_start);
+    const remaining = refreshedShop.plan === "pro" || status === "trial" ? null : 150 - refreshedShop.transaction_count;
 
     return {
       plan: refreshedShop.plan,
       transactionCount: refreshedShop.transaction_count,
       remaining,
+      status,
     };
   } catch {
     return null;
@@ -325,7 +331,7 @@ export const getProfile = createServerFn({ method: "GET" }).handler(async () => 
   const session = await requireSession();
   const shop = await getShopOrThrow(session.shop_id);
 
-  const status = computeSubscriptionStatus(shop.subscription_expiry);
+  const status = computeSubscriptionStatus(shop.subscription_expiry, shop.trial_start);
   const days_remaining = Math.max(
     0,
     Math.ceil(
