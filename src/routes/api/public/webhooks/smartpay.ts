@@ -104,7 +104,7 @@ export const Route = createFileRoute("/api/public/webhooks/smartpay")({
           // Subscription match
           const { data: payment } = await supabaseAdmin
             .from("subscription_payments")
-            .select("id, shop_id, payment_status, plan")
+            .select("id, shop_id, payment_status")
             .eq("payment_reference", `SUB-CRID-${checkoutRequestId}`)
             .maybeSingle();
 
@@ -113,7 +113,7 @@ export const Route = createFileRoute("/api/public/webhooks/smartpay")({
           if (!subPayment) {
             const { data: alt } = await supabaseAdmin
               .from("subscription_payments")
-              .select("id, shop_id, payment_status, payment_reference, plan")
+              .select("id, shop_id, payment_status, payment_reference")
               .ilike("payment_reference", `%${checkoutRequestId}%`)
               .maybeSingle();
             subPayment = alt ?? null;
@@ -140,15 +140,32 @@ export const Route = createFileRoute("/api/public/webhooks/smartpay")({
               const newExpiry = new Date(
                 base + 30 * 24 * 60 * 60 * 1000
               ).toISOString();
-              await supabaseAdmin
+              
+              // Get the plan from the payment record (will work once migration is applied)
+              let plan = "basic";
+              try {
+                const { data: paymentData } = await (supabaseAdmin
+                  .from("subscription_payments")
+                  .select("plan")
+                  .eq("id", subPayment.id) as any)
+                  .maybeSingle();
+                if (paymentData && (paymentData as any).plan) {
+                  plan = (paymentData as any).plan;
+                }
+              } catch (e) {
+                // plan column doesn't exist yet - use default
+                console.warn("[smartpay] Could not get plan from payment:", e);
+              }
+              
+              await (supabaseAdmin
                 .from("shops")
                 .update({
                   subscription_expiry: newExpiry,
                   subscription_status: "active",
-                  plan: subPayment.plan || "basic",
-                  trial_start: null,
-                })
-                .eq("id", subPayment.shop_id);
+                  ...(plan && { plan: plan }),
+                  trial_start: "",
+                } as any)
+                .eq("id", subPayment.shop_id) as any);
             } else {
               await supabaseAdmin
                 .from("subscription_payments")

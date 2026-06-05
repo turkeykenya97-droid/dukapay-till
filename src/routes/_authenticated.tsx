@@ -3,8 +3,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getCurrentShop, logout } from "@/lib/auth.functions";
-import { LayoutDashboard, Package, History, LogOut, ShoppingCart, BarChart3, User, CreditCard } from "lucide-react";
+import { LayoutDashboard, Package, History, LogOut, ShoppingCart, BarChart3, User, CreditCard, MoreVertical } from "lucide-react";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -42,6 +48,10 @@ function AuthenticatedLayout() {
     { to: "/subscription", label: "Subscription", icon: CreditCard },
     { to: "/profile", label: "Profile", icon: User },
   ] as const;
+
+  // Primary items visible on mobile, all on desktop
+  const primaryItems = items.slice(0, 4);
+  const secondaryItems = items.slice(4);
 
   if (!showNav) {
     return (
@@ -96,14 +106,14 @@ function AuthenticatedLayout() {
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 inset-x-0 bg-card border-t border-border z-30 lg:hidden">
         <div className="max-w-2xl mx-auto flex items-center justify-around">
-          {items.map((it) => {
+          {primaryItems.map((it) => {
             const active = location.pathname.startsWith(it.to);
             const Icon = it.icon;
             return (
               <Link
                 key={it.to}
                 to={it.to}
-                className={`flex-1 flex flex-col items-center py-2.5 text-[10px] transition-colors ${
+                className={`flex-1 flex flex-col items-center py-3 text-[10px] transition-colors ${
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -112,13 +122,38 @@ function AuthenticatedLayout() {
               </Link>
             );
           })}
-          <button
-            onClick={() => logoutMutation.mutate()}
-            className="flex-1 flex flex-col items-center py-2.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <LogOut className="h-5 w-5 mb-0.5" />
-            Out
-          </button>
+          
+          {/* More menu for secondary items */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex-1 flex flex-col items-center py-3 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                <MoreVertical className="h-5 w-5 mb-0.5" />
+                More
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 mb-16">
+              {secondaryItems.map((it) => {
+                const Icon = it.icon;
+                const active = location.pathname.startsWith(it.to);
+                return (
+                  <Link
+                    key={it.to}
+                    to={it.to}
+                    asChild
+                  >
+                    <DropdownMenuItem className={active ? "bg-primary/10 text-primary" : ""}>
+                      <Icon className="h-4 w-4 mr-2" />
+                      {it.label}
+                    </DropdownMenuItem>
+                  </Link>
+                );
+              })}
+              <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </nav>
       

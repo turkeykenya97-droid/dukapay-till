@@ -34,8 +34,8 @@ export const initiateRenewal = createServerFn({ method: "POST" })
       shop_id: s.shop_id,
       amount,
       payment_status: "pending",
-      plan: data.plan,
-    })
+      ...(data.plan && { plan: data.plan }),
+    } as any)
     .select("id")
     .single();
   if (error || !payment) {
@@ -75,6 +75,6 @@ export const getSubscription = createServerFn({ method: "GET" }).handler(async (
     status,
     expiry: shop.subscription_expiry,
     trial_start: shop.trial_start,
-    amount: SUBSCRIPTION_AMOUNT,
+    plans: PLAN_PRICING,
   };
 });

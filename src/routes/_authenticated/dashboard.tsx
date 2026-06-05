@@ -6,7 +6,7 @@ import { getDashboard } from "@/lib/sales.functions";
 import { initiateRenewal } from "@/lib/subscription.functions";
 import { Button } from "@/components/ui/button";
 import { fmtKsh } from "@/lib/format";
-import { ShoppingCart, AlertTriangle, TrendingUp, Receipt } from "lucide-react";
+import { ShoppingCart, AlertTriangle, TrendingUp, Receipt, Calculator, Plus, History, CreditCard } from "lucide-react";
 
 const dashboardQuery = queryOptions({
   queryKey: ["dashboard"],
@@ -86,6 +86,47 @@ function DashboardPage() {
           </div>
           <div className="text-2xl font-bold capitalize">{data.shop.display_status}</div>
         </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+        <button
+          onClick={() => navigate({ to: "/sell" })}
+          disabled={expired}
+          className="flex flex-col items-center gap-2 p-3 bg-card border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Start a new sale"
+        >
+          <ShoppingCart className="h-5 w-5 text-primary" />
+          <span className="text-xs font-medium text-center">New Sale</span>
+        </button>
+
+        <button
+          onClick={() => navigate({ to: "/sell" })}
+          disabled={expired}
+          className="flex flex-col items-center gap-2 p-3 bg-card border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Use the calculator to calculate amounts"
+        >
+          <Calculator className="h-5 w-5 text-blue-500" />
+          <span className="text-xs font-medium text-center">Calculator</span>
+        </button>
+
+        <button
+          onClick={() => navigate({ to: "/products" })}
+          className="flex flex-col items-center gap-2 p-3 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
+          title="Add a new product"
+        >
+          <Plus className="h-5 w-5 text-green-500" />
+          <span className="text-xs font-medium text-center">Add Product</span>
+        </button>
+
+        <button
+          onClick={() => navigate({ to: "/history" })}
+          className="flex flex-col items-center gap-2 p-3 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
+          title="View sales history"
+        >
+          <History className="h-5 w-5 text-orange-500" />
+          <span className="text-xs font-medium text-center">History</span>
+        </button>
       </div>
 
       <Button
