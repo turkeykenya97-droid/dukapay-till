@@ -136,16 +136,12 @@ function AuthenticatedLayout() {
                 const Icon = it.icon;
                 const active = location.pathname.startsWith(it.to);
                 return (
-                  <Link
-                    key={it.to}
-                    to={it.to}
-                    asChild
-                  >
-                    <DropdownMenuItem className={active ? "bg-primary/10 text-primary" : ""}>
+                  <DropdownMenuItem key={it.to} asChild className={active ? "bg-primary/10 text-primary" : ""}>
+                    <Link to={it.to}>
                       <Icon className="h-4 w-4 mr-2" />
                       {it.label}
-                    </DropdownMenuItem>
-                  </Link>
+                    </Link>
+                  </DropdownMenuItem>
                 );
               })}
               <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
