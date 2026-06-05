@@ -244,7 +244,7 @@ function ProfilePage() {
             <div>
               <p className="text-xs text-muted-foreground mb-1">Till Type</p>
               <p className="text-sm font-medium">
-                {profile.till_type === "paybill" ? "PayBill" : profile.till_type?.charAt(0).toUpperCase() + profile.till_type?.slice(1)}
+                {profile.till_type === "paybill" ? "PayBill" : (profile.till_type ?? "").charAt(0).toUpperCase() + (profile.till_type ?? "").slice(1)}
               </p>
             </div>
             <div>
