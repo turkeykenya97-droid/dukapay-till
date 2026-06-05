@@ -59,7 +59,7 @@ function SubscriptionPage() {
       <h1 className="text-3xl font-bold mb-2">Subscription Plans</h1>
       <p className="text-muted-foreground mb-8">
         {isTrialActive
-          ? "You're currently on a free trial with full access to all features. Choose a plan below to continue after your trial ends."
+          ? "You're currently on a free trial with full access to all features. Upgrade to a paid plan anytime below - no commitment needed."
           : `You're currently on the ${isBasic ? "Basic" : "Pro"} plan. Manage your subscription below.`}
       </p>
 

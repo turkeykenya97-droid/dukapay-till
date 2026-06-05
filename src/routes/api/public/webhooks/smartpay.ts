@@ -104,7 +104,7 @@ export const Route = createFileRoute("/api/public/webhooks/smartpay")({
           // Subscription match
           const { data: payment } = await supabaseAdmin
             .from("subscription_payments")
-            .select("id, shop_id, payment_status")
+            .select("id, shop_id, payment_status, plan")
             .eq("payment_reference", `SUB-CRID-${checkoutRequestId}`)
             .maybeSingle();
 
@@ -113,7 +113,7 @@ export const Route = createFileRoute("/api/public/webhooks/smartpay")({
           if (!subPayment) {
             const { data: alt } = await supabaseAdmin
               .from("subscription_payments")
-              .select("id, shop_id, payment_status, payment_reference")
+              .select("id, shop_id, payment_status, payment_reference, plan")
               .ilike("payment_reference", `%${checkoutRequestId}%`)
               .maybeSingle();
             subPayment = alt ?? null;
@@ -145,6 +145,8 @@ export const Route = createFileRoute("/api/public/webhooks/smartpay")({
                 .update({
                   subscription_expiry: newExpiry,
                   subscription_status: "active",
+                  plan: subPayment.plan || "basic",
+                  trial_start: null,
                 })
                 .eq("id", subPayment.shop_id);
             } else {
