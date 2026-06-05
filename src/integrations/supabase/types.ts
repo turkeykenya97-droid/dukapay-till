@@ -189,9 +189,6 @@ export type Database = {
           till_type: string | null
           trial_start: string
           updated_at: string
-          plan: string
-          transaction_count: number
-          transaction_reset_date: string
         }
         Insert: {
           created_at?: string
@@ -210,9 +207,6 @@ export type Database = {
           till_type?: string | null
           trial_start?: string
           updated_at?: string
-          plan?: string
-          transaction_count?: number
-          transaction_reset_date?: string
         }
         Update: {
           created_at?: string
@@ -231,9 +225,6 @@ export type Database = {
           till_type?: string | null
           trial_start?: string
           updated_at?: string
-          plan?: string
-          transaction_count?: number
-          transaction_reset_date?: string
         }
         Relationships: []
       }
