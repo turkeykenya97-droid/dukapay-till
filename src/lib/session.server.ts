@@ -32,6 +32,9 @@ export interface ShopRecord {
   trial_start: string;
   subscription_expiry: string;
   subscription_status: "trial" | "active" | "expired";
+  plan: string;
+  transaction_count: number;
+  transaction_reset_date: string;
 }
 
 export function hasPaymentChannel(shop: {
@@ -45,7 +48,7 @@ export async function getShopOrThrow(shopId: string): Promise<ShopRecord> {
   const { data, error } = await supabaseAdmin
     .from("shops")
     .select(
-      "id, owner_name, shop_name, phone, pin_valid_until, payment_channel_id, payment_api_key, till_number, till_type, trial_start, subscription_expiry, subscription_status"
+      "id, owner_name, shop_name, phone, pin_valid_until, payment_channel_id, payment_api_key, till_number, till_type, trial_start, subscription_expiry, subscription_status, plan, transaction_count, transaction_reset_date"
     )
     .eq("id", shopId)
     .maybeSingle();

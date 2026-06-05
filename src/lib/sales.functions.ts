@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSession, getShopOrThrow, computeSubscriptionStatus } from "./session.server";
 import { sendStkPush } from "./smartpay.server";
+import { checkTransactionLimit, incrementTransactionCount, resetTransactionCountIfNeeded } from "./auth.functions";
 
 const phoneSchema = z
   .string()
@@ -134,6 +135,13 @@ export const createSale = createServerFn({ method: "POST" })
 
     const reference = `SALE-${sale.id}`;
     try {
+      // Check transaction limit before sending STK push
+      const limitCheck = await checkTransactionLimit(s.shop_id);
+      if (!limitCheck.canSend) {
+        await supabaseAdmin.from("sales").delete().eq("id", sale.id);
+        throw new Error(limitCheck.message || "Transaction limit reached");
+      }
+
       const stk = await sendStkPush({
         amount: mpesaAmount,
         phone_number: data.customer_phone,
@@ -141,6 +149,10 @@ export const createSale = createServerFn({ method: "POST" })
         external_reference: reference,
         description: `Sale ${sale.id}`,
       });
+      
+      // Increment transaction count after successful STK push
+      await incrementTransactionCount(s.shop_id);
+      
       await supabaseAdmin
         .from("sales")
         .update({
@@ -226,6 +238,12 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
   const s = await requireSession();
   const shop = await getShopOrThrow(s.shop_id);
 
+  // Reset transaction count if needed
+  await resetTransactionCountIfNeeded(s.shop_id);
+  
+  // Get fresh shop data
+  const freshShop = await getShopOrThrow(s.shop_id);
+
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
@@ -261,6 +279,8 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
     )
   );
 
+  const transactionRemaining = freshShop.plan === "pro" ? null : 150 - freshShop.transaction_count;
+
   return {
     shop: {
       id: shop.id,
@@ -269,6 +289,9 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
       subscription_status: status,
       days_remaining,
       subscription_expiry: shop.subscription_expiry,
+      plan: freshShop.plan,
+      transactionCount: freshShop.transaction_count,
+      transactionRemaining,
     },
     today: { sales_count, revenue },
     low_stock,
@@ -277,6 +300,12 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
 
 export const getAnalytics = createServerFn({ method: "GET" }).handler(async () => {
   const s = await requireSession();
+  const shop = await getShopOrThrow(s.shop_id);
+
+  // Feature gate: Analytics only for Pro plan
+  if (shop.plan === "basic") {
+    throw new Error("UPGRADE_REQUIRED");
+  }
 
   const now = new Date();
   const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);

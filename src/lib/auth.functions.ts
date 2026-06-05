@@ -46,7 +46,7 @@ function setSessionCookie(token: string) {
   });
 }
 
-const TRIAL_DAYS = Number(process.env.TRIAL_DAYS ?? 7);
+const TRIAL_DAYS = Number(process.env.TRIAL_DAYS ?? 30);
 
 export const registerShop = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => registerSchema.parse(d))
@@ -75,6 +75,9 @@ export const registerShop = createServerFn({ method: "POST" })
         pin_hash,
         subscription_expiry,
         subscription_status: "trial",
+        plan: "basic",
+        transaction_count: 0,
+        transaction_reset_date: new Date().toISOString().split('T')[0],
       })
       .select("id, phone")
       .single();
@@ -225,3 +228,90 @@ export const onboardTill = createServerFn({ method: "POST" })
 
     return { channel_id: channelId };
   });
+
+/**
+ * Check and reset transaction count if month has changed
+ * Used before allowing STK push
+ */
+export async function resetTransactionCountIfNeeded(shopId: string): Promise<void> {
+  const shop = await getShopOrThrow(shopId);
+  const today = new Date().toISOString().split('T')[0];
+  const lastReset = shop.transaction_reset_date;
+
+  if (lastReset !== today) {
+    await supabaseAdmin
+      .from("shops")
+      .update({
+        transaction_count: 0,
+        transaction_reset_date: today,
+      })
+      .eq("id", shopId);
+  }
+}
+
+/**
+ * Check if shop can send STK push based on plan and transaction limit
+ * Returns { canSend: boolean, remaining?: number, message?: string }
+ */
+export async function checkTransactionLimit(shopId: string): Promise<{
+  canSend: boolean;
+  remaining?: number;
+  message?: string;
+}> {
+  await resetTransactionCountIfNeeded(shopId);
+  const shop = await getShopOrThrow(shopId);
+
+  if (shop.plan === "pro") {
+    return { canSend: true };
+  }
+
+  // Basic plan: 150 transactions per month
+  const BASIC_LIMIT = 150;
+  const remaining = BASIC_LIMIT - shop.transaction_count;
+
+  if (remaining <= 0) {
+    return {
+      canSend: false,
+      remaining: 0,
+      message: `Transaction limit reached. You've used all 150 transactions this month. Upgrade to Pro for unlimited transactions.`,
+    };
+  }
+
+  return { canSend: true, remaining };
+}
+
+/**
+ * Increment transaction count after successful STK push
+ */
+export async function incrementTransactionCount(shopId: string): Promise<void> {
+  const shop = await getShopOrThrow(shopId);
+  await supabaseAdmin
+    .from("shops")
+    .update({
+      transaction_count: shop.transaction_count + 1,
+    })
+    .eq("id", shopId);
+}
+
+/**
+ * Server function to get plan and transaction info for dashboard
+ */
+export const getPlanInfo = createServerFn({ method: "GET" }).handler(async () => {
+  const session = await getSessionPayload();
+  if (!session) return null;
+  try {
+    const shop = await getShopOrThrow(session.shop_id);
+    await resetTransactionCountIfNeeded(session.shop_id);
+
+    const refreshedShop = await getShopOrThrow(session.shop_id);
+    const remaining = refreshedShop.plan === "pro" ? null : 150 - refreshedShop.transaction_count;
+
+    return {
+      plan: refreshedShop.plan,
+      transactionCount: refreshedShop.transaction_count,
+      remaining,
+    };
+  } catch {
+    return null;
+  }
+});

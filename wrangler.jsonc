@@ -15,5 +15,11 @@
   },
   "observability": {
     "enabled": true
+  },
+  "vars": {
+    "SMARTPAY_BOOTSTRAP_API_KEY": "your-bootstrap-key-here",
+    "SMARTPAY_CALLBACK_URL": "https://your-domain.com/api/public/webhooks/smartpay",
+    "SUBSCRIPTION_AMOUNT": "499",
+    "TRIAL_DAYS": "30"
   }
 }
