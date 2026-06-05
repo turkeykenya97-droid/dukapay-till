@@ -440,7 +440,7 @@ function ProfilePage() {
               <select
                 id="till-type"
                 value={tillType}
-                onChange={(e) => setTillType(e.target.value)}
+                onChange={(e) => setTillType(e.target.value as "till" | "paybill" | "bank")}
                 className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
               >
                 <option value="till">Till</option>
