@@ -26,13 +26,30 @@ function LoginPage() {
   const [password, setPassword] = useState("");
 
   const mutation = useMutation({
-    mutationFn: () => login({ data: { phone, password } }),
+    mutationFn: () => {
+      console.log("[login] Attempting to login with phone:", phone);
+      return login({ data: { phone, password } });
+    },
     onSuccess: (data) => {
+      console.log("[login] Success:", data);
       toast.success("Welcome back!");
       navigate({ to: data.needs_onboarding ? "/onboarding" : "/dashboard" });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      console.error("[login error]", e);
+      toast.error(e.message || "Login failed. Please try again.");
+    },
   });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("[login] Form submitted");
+    if (!phone || !password) {
+      toast.error("Please enter phone and password");
+      return;
+    }
+    mutation.mutate();
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-10">
@@ -46,10 +63,7 @@ function LoginPage() {
         </div>
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              mutation.mutate();
-            }}
+            onSubmit={handleSubmit}
             className="space-y-4"
           >
             <div className="space-y-2">

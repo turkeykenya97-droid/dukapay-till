@@ -43,10 +43,14 @@ function RegisterPage() {
         },
       }),
     onSuccess: () => {
+      console.log("[register] Success");
       toast.success("Account created! Let's set up your till.");
       navigate({ to: "/onboarding" });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      console.error("[register error]", e);
+      toast.error(e.message || "Failed to create account. Please try again.");
+    },
   });
 
   const submit = (e: React.FormEvent) => {
