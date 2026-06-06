@@ -106,13 +106,29 @@ export const loginShop = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (!adminError && admin) {
-      // It's an admin account - verify password and login as admin
+      // It's an admin account - verify password and use admin login server function
       const ok = await bcrypt.compare(data.password, admin.password_hash);
       if (!ok) throw new Error("Invalid phone or password");
 
-      // Import admin auth functions and login
-      const { adminLoginByPhone } = await import("@/lib/admin-auth.functions.server");
-      await adminLoginByPhone(data.phone, data.password);
+      // Set admin session cookie inline here
+      const { setCookie } = require("@tanstack/react-start/server");
+      const { signAdminJwt } = await import("@/lib/admin-jwt.server");
+      
+      // Update last_login
+      await supabaseAdmin
+        .from("admin_users")
+        .update({ last_login: new Date().toISOString() })
+        .eq("id", admin.id);
+
+      // Create JWT and set cookie
+      const token = await signAdminJwt({ admin_id: admin.id, email: "" });
+      setCookie("dukapos_admin_session", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        path: "/",
+        maxAge: 60 * 60 * 8, // 8 hours
+      });
       
       return {
         shop_id: admin.id,
