@@ -38,10 +38,10 @@ const getMerchantsNeedingSupportServer = createServerFn({ method: "GET" }).handl
 
   if (shopsError) throw shopsError;
 
-  // Get all transactions
+  // Get all transactions (sales)
   const { data: transactions, error: txError } = await supabaseAdmin
     .from("sales")
-    .select("*");
+    .select("shop_id, payment_status");
 
   if (txError) throw txError;
 
@@ -76,7 +76,7 @@ const getMerchantsNeedingSupportServer = createServerFn({ method: "GET" }).handl
     // Issue 2: High failed transaction rate (>30%)
     const shopTransactions = transactions?.filter((t) => t.shop_id === shop.id) || [];
     if (shopTransactions.length > 0) {
-      const failedCount = shopTransactions.filter((t) => t.status === "failed").length;
+      const failedCount = shopTransactions.filter((t) => t.payment_status === "failed").length;
       const failureRate = (failedCount / shopTransactions.length) * 100;
       if (failureRate > 30) {
         issues.push({

@@ -35,10 +35,10 @@ const getAnalyticsDataServer = createServerFn({ method: "GET" }).handler(async (
 
   if (shopsError) throw shopsError;
 
-  // Get all transactions
+  // Get all sales as transactions
   const { data: transactions, error: txError } = await supabaseAdmin
     .from("sales")
-    .select("amount, created_at");
+    .select("total_amount, created_at");
 
   if (txError) throw txError;
 
@@ -58,15 +58,16 @@ const getAnalyticsDataServer = createServerFn({ method: "GET" }).handler(async (
   const basicCount = (shops || []).filter((s) => s.plan === "basic").length;
   const proCount = (shops || []).filter((s) => s.plan === "pro").length;
 
-  // Top merchants by transaction volume
+  // Top merchants by transaction volume (with id for keys)
   const topMerchants = (shops || [])
+    .map((s, i) => ({ ...s, id: `top-${i}` }))
     .sort((a, b) => (b.transaction_count || 0) - (a.transaction_count || 0))
     .slice(0, 10);
 
   // Average transaction value
   const avgTxValue =
     (transactions || []).length > 0
-      ? (transactions || []).reduce((sum, t) => sum + (t.amount || 0), 0) / (transactions || []).length
+      ? (transactions || []).reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0) / (transactions || []).length
       : 0;
 
   return {
