@@ -111,7 +111,7 @@ export const loginShop = createServerFn({ method: "POST" })
       if (!ok) throw new Error("Invalid phone or password");
 
       // Import admin auth functions and login
-      const { adminLoginByPhone } = await import("@/lib/admin-auth.functions");
+      const { adminLoginByPhone } = await import("@/lib/admin-auth.functions.server");
       await adminLoginByPhone(data.phone, data.password);
       
       return {

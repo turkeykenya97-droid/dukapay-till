@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { adminLogin as adminLoginFn } from "@/lib/admin-auth.functions";
+import { adminLogin as adminLoginFn } from "@/lib/admin-auth.functions.server";
 
 const adminLoginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -17,12 +17,12 @@ export const adminLoginServer = createServerFn("POST", async (payload: {
 });
 
 export const adminLogoutServer = createServerFn("POST", async () => {
-  const { adminLogout } = await import("@/lib/admin-auth.functions");
+  const { adminLogout } = await import("@/lib/admin-auth.functions.server");
   await adminLogout();
   return { success: true };
 });
 
 export const getAdminSessionServer = createServerFn("GET", async () => {
-  const { getAdminSessionPayload } = await import("@/lib/admin-auth.functions");
+  const { getAdminSessionPayload } = await import("@/lib/admin-auth.functions.server");
   return await getAdminSessionPayload();
 });

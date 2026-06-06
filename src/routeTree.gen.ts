@@ -11,8 +11,20 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminTransactionsRouteImport } from './routes/admin/transactions'
+import { Route as AdminSystemRouteImport } from './routes/admin/system'
+import { Route as AdminSupportRouteImport } from './routes/admin/support'
+import { Route as AdminSmartpayRouteImport } from './routes/admin/smartpay'
+import { Route as AdminRevenueRouteImport } from './routes/admin/revenue'
+import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
+import { Route as AdminMerchantsRouteImport } from './routes/admin/merchants'
+import { Route as AdminLogsRouteImport } from './routes/admin/logs'
+import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedSellRouteImport } from './routes/_authenticated/sell'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
@@ -33,6 +45,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -41,6 +58,61 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminTransactionsRoute = AdminTransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSystemRoute = AdminSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSmartpayRoute = AdminSmartpayRouteImport.update({
+  id: '/smartpay',
+  path: '/smartpay',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRevenueRoute = AdminRevenueRouteImport.update({
+  id: '/revenue',
+  path: '/revenue',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMerchantsRoute = AdminMerchantsRouteImport.update({
+  id: '/merchants',
+  path: '/merchants',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLogsRoute = AdminLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AuthenticatedSubscriptionRoute =
   AuthenticatedSubscriptionRouteImport.update({
@@ -92,6 +164,7 @@ const ApiPublicWebhooksSmartpayRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -102,10 +175,22 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/sell': typeof AuthenticatedSellRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/merchants': typeof AdminMerchantsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/revenue': typeof AdminRevenueRoute
+  '/admin/smartpay': typeof AdminSmartpayRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/system': typeof AdminSystemRoute
+  '/admin/transactions': typeof AdminTransactionsRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -116,12 +201,24 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/sell': typeof AuthenticatedSellRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/merchants': typeof AdminMerchantsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/revenue': typeof AdminRevenueRoute
+  '/admin/smartpay': typeof AdminSmartpayRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/system': typeof AdminSystemRoute
+  '/admin/transactions': typeof AdminTransactionsRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
@@ -132,12 +229,24 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/sell': typeof AuthenticatedSellRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/merchants': typeof AdminMerchantsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/revenue': typeof AdminRevenueRoute
+  '/admin/smartpay': typeof AdminSmartpayRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/system': typeof AdminSystemRoute
+  '/admin/transactions': typeof AdminTransactionsRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/login'
     | '/register'
     | '/analytics'
@@ -148,10 +257,22 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sell'
     | '/subscription'
+    | '/admin/analytics'
+    | '/admin/dashboard'
+    | '/admin/login'
+    | '/admin/logs'
+    | '/admin/merchants'
+    | '/admin/notifications'
+    | '/admin/revenue'
+    | '/admin/smartpay'
+    | '/admin/support'
+    | '/admin/system'
+    | '/admin/transactions'
     | '/api/public/webhooks/smartpay'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/login'
     | '/register'
     | '/analytics'
@@ -162,11 +283,23 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sell'
     | '/subscription'
+    | '/admin/analytics'
+    | '/admin/dashboard'
+    | '/admin/login'
+    | '/admin/logs'
+    | '/admin/merchants'
+    | '/admin/notifications'
+    | '/admin/revenue'
+    | '/admin/smartpay'
+    | '/admin/support'
+    | '/admin/system'
+    | '/admin/transactions'
     | '/api/public/webhooks/smartpay'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/admin'
     | '/login'
     | '/register'
     | '/_authenticated/analytics'
@@ -177,12 +310,24 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/sell'
     | '/_authenticated/subscription'
+    | '/admin/analytics'
+    | '/admin/dashboard'
+    | '/admin/login'
+    | '/admin/logs'
+    | '/admin/merchants'
+    | '/admin/notifications'
+    | '/admin/revenue'
+    | '/admin/smartpay'
+    | '/admin/support'
+    | '/admin/system'
+    | '/admin/transactions'
     | '/api/public/webhooks/smartpay'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ApiPublicWebhooksSmartpayRoute: typeof ApiPublicWebhooksSmartpayRoute
@@ -204,6 +349,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -217,6 +369,83 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/transactions': {
+      id: '/admin/transactions'
+      path: '/transactions'
+      fullPath: '/admin/transactions'
+      preLoaderRoute: typeof AdminTransactionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/system': {
+      id: '/admin/system'
+      path: '/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AdminSystemRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/smartpay': {
+      id: '/admin/smartpay'
+      path: '/smartpay'
+      fullPath: '/admin/smartpay'
+      preLoaderRoute: typeof AdminSmartpayRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/revenue': {
+      id: '/admin/revenue'
+      path: '/revenue'
+      fullPath: '/admin/revenue'
+      preLoaderRoute: typeof AdminRevenueRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/merchants': {
+      id: '/admin/merchants'
+      path: '/merchants'
+      fullPath: '/admin/merchants'
+      preLoaderRoute: typeof AdminMerchantsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/logs': {
+      id: '/admin/logs'
+      path: '/logs'
+      fullPath: '/admin/logs'
+      preLoaderRoute: typeof AdminLogsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_authenticated/subscription': {
       id: '/_authenticated/subscription'
@@ -310,9 +539,40 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface AdminRouteChildren {
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminLogsRoute: typeof AdminLogsRoute
+  AdminMerchantsRoute: typeof AdminMerchantsRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
+  AdminRevenueRoute: typeof AdminRevenueRoute
+  AdminSmartpayRoute: typeof AdminSmartpayRoute
+  AdminSupportRoute: typeof AdminSupportRoute
+  AdminSystemRoute: typeof AdminSystemRoute
+  AdminTransactionsRoute: typeof AdminTransactionsRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminLogsRoute: AdminLogsRoute,
+  AdminMerchantsRoute: AdminMerchantsRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
+  AdminRevenueRoute: AdminRevenueRoute,
+  AdminSmartpayRoute: AdminSmartpayRoute,
+  AdminSupportRoute: AdminSupportRoute,
+  AdminSystemRoute: AdminSystemRoute,
+  AdminTransactionsRoute: AdminTransactionsRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ApiPublicWebhooksSmartpayRoute: ApiPublicWebhooksSmartpayRoute,
@@ -320,3 +580,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
