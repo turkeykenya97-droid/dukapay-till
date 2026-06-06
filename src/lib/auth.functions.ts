@@ -1,12 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setCookie, deleteCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { signShopJwt, SESSION_COOKIE } from "./jwt.server";
-import { getSessionPayload, getShopOrThrow, requireSession, computeSubscriptionStatus } from "./session.server";
-import { registerPaymentChannel } from "./smartpay.server";
-import { hasPaymentChannel } from "./session.server";
 
 const phoneSchema = z
   .string()
@@ -36,7 +32,8 @@ const onboardSchema = z.object({
   account_number: z.string().trim().max(50).optional(),
 });
 
-function setSessionCookie(token: string) {
+async function setSessionCookie(token: string) {
+  const { setCookie } = await import("@tanstack/react-start/server");
   setCookie(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: true,
@@ -91,7 +88,7 @@ export const registerShop = createServerFn({ method: "POST" })
     }
 
     const token = await signShopJwt({ shop_id: shop.id, phone: shop.phone });
-    setSessionCookie(token);
+    await setSessionCookie(token);
     return { shop_id: shop.id };
   });
 
@@ -153,7 +150,9 @@ export const loginShop = createServerFn({ method: "POST" })
     if (!ok) throw new Error("Invalid phone or password");
 
     const token = await signShopJwt({ shop_id: shop.id, phone: shop.phone });
-    setSessionCookie(token);
+    await setSessionCookie(token);
+    
+    const { hasPaymentChannel } = await import("./session.server");
     return {
       shop_id: shop.id,
       is_admin: false,
@@ -162,11 +161,13 @@ export const loginShop = createServerFn({ method: "POST" })
   });
 
 export const logout = createServerFn({ method: "POST" }).handler(async () => {
+  const { deleteCookie } = await import("@tanstack/react-start/server");
   deleteCookie(SESSION_COOKIE, { path: "/" });
   return { ok: true };
 });
 
 export const getCurrentShop = createServerFn({ method: "GET" }).handler(async () => {
+  const { getSessionPayload, getShopOrThrow, hasPaymentChannel } = await import("./session.server");
   const session = await getSessionPayload();
   if (!session) return null;
   try {
@@ -188,6 +189,7 @@ const PIN_LOCK_MS = 15 * 60 * 1000;
 export const verifyPin = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => pinSchema.parse(d))
   .handler(async ({ data }) => {
+    const { requireSession } = await import("./session.server");
     const session = await requireSession();
     const shopId = session.shop_id;
     const now = Date.now();
@@ -246,6 +248,8 @@ export const verifyPin = createServerFn({ method: "POST" })
 export const onboardTill = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => onboardSchema.parse(d))
   .handler(async ({ data }) => {
+    const { requireSession, getShopOrThrow } = await import("./session.server");
+    const { registerPaymentChannel } = await import("./smartpay.server");
     const session = await requireSession();
     const shop = await getShopOrThrow(session.shop_id);
 
@@ -275,75 +279,11 @@ export const onboardTill = createServerFn({ method: "POST" })
   });
 
 /**
- * Check and reset transaction count if month has changed
- * Used before allowing STK push
- */
-export async function resetTransactionCountIfNeeded(shopId: string): Promise<void> {
-  const shop = await getShopOrThrow(shopId);
-  const today = new Date().toISOString().split('T')[0];
-  const lastReset = shop.transaction_reset_date;
-
-  if (lastReset !== today) {
-    await supabaseAdmin
-      .from("shops")
-      .update({
-        transaction_count: 0,
-        transaction_reset_date: today,
-      })
-      .eq("id", shopId);
-  }
-}
-
-/**
- * Check if shop can send STK push based on plan and transaction limit
- * Returns { canSend: boolean, remaining?: number, message?: string }
- */
-export async function checkTransactionLimit(shopId: string): Promise<{
-  canSend: boolean;
-  remaining?: number;
-  message?: string;
-}> {
-  await resetTransactionCountIfNeeded(shopId);
-  const shop = await getShopOrThrow(shopId);
-
-  // Trial and Pro users have unlimited transactions
-  const status = computeSubscriptionStatus(shop.subscription_expiry, shop.trial_start);
-  if (shop.plan === "pro" || status === "trial") {
-    return { canSend: true };
-  }
-
-  // Basic plan (after trial): 150 transactions per month
-  const BASIC_LIMIT = 150;
-  const remaining = BASIC_LIMIT - shop.transaction_count;
-
-  if (remaining <= 0) {
-    return {
-      canSend: false,
-      remaining: 0,
-      message: `Transaction limit reached. You've used all 150 transactions this month. Upgrade to Pro for unlimited transactions.`,
-    };
-  }
-
-  return { canSend: true, remaining };
-}
-
-/**
- * Increment transaction count after successful STK push
- */
-export async function incrementTransactionCount(shopId: string): Promise<void> {
-  const shop = await getShopOrThrow(shopId);
-  await supabaseAdmin
-    .from("shops")
-    .update({
-      transaction_count: shop.transaction_count + 1,
-    })
-    .eq("id", shopId);
-}
-
-/**
  * Server function to get plan and transaction info for dashboard
  */
 export const getPlanInfo = createServerFn({ method: "GET" }).handler(async () => {
+  const { getSessionPayload, getShopOrThrow, computeSubscriptionStatus } = await import("./session.server");
+  const { resetTransactionCountIfNeeded } = await import("./auth-helpers.server");
   const session = await getSessionPayload();
   if (!session) return null;
   try {
@@ -369,6 +309,7 @@ export const getPlanInfo = createServerFn({ method: "GET" }).handler(async () =>
  * Get complete user profile with all details
  */
 export const getProfile = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireSession, getShopOrThrow, computeSubscriptionStatus } = await import("./session.server");
   const session = await requireSession();
   const shop = await getShopOrThrow(session.shop_id);
 
@@ -411,6 +352,7 @@ const updatePasswordSchema = z.object({
 export const changePassword = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => updatePasswordSchema.parse(d))
   .handler(async ({ data }) => {
+    const { requireSession } = await import("./session.server");
     const session = await requireSession();
     const shopId = session.shop_id;
 
@@ -500,6 +442,7 @@ const updateTillSchema = z.object({
 export const updateTillSettings = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => updateTillSchema.parse(d))
   .handler(async ({ data }) => {
+    const { requireSession } = await import("./session.server");
     const s = await requireSession();
     const { till_type, till_number } = data;
 

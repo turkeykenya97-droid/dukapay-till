@@ -3,7 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSession, getShopOrThrow, computeSubscriptionStatus } from "./session.server";
 import { sendStkPush } from "./smartpay.server";
-import { checkTransactionLimit, incrementTransactionCount, resetTransactionCountIfNeeded } from "./auth.functions";
+import { checkTransactionLimit, incrementTransactionCount, resetTransactionCountIfNeeded } from "./auth-helpers.server";
 
 const phoneSchema = z
   .string()
