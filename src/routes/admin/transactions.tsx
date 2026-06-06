@@ -32,10 +32,10 @@ export const Route = createFileRoute("/admin/transactions")({
 });
 
 // Server function to fetch transactions
-const getTransactionsServer = createServerFn("GET", async () => {
+const getTransactionsServer = createServerFn({ method: "GET" }).handler(async () => {
   // Get transactions
   const { data: transactions, error: txError } = await supabaseAdmin
-    .from("transactions")
+    .from("sales")
     .select("*")
     .order("created_at", { ascending: false });
 
@@ -74,7 +74,7 @@ const getTransactionsServer = createServerFn("GET", async () => {
 });
 
 function TransactionsPage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getTransactions = useServerFn(getTransactionsServer);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed" | "failed">(
@@ -107,8 +107,8 @@ function TransactionsPage() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div>

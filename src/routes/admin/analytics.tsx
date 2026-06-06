@@ -27,7 +27,7 @@ export const Route = createFileRoute("/admin/analytics")({
   component: AnalyticsPage,
 });
 
-const getAnalyticsDataServer = createServerFn("GET", async () => {
+const getAnalyticsDataServer = createServerFn({ method: "GET" }).handler(async () => {
   // Get all shops
   const { data: shops, error: shopsError } = await supabaseAdmin
     .from("shops")
@@ -37,7 +37,7 @@ const getAnalyticsDataServer = createServerFn("GET", async () => {
 
   // Get all transactions
   const { data: transactions, error: txError } = await supabaseAdmin
-    .from("transactions")
+    .from("sales")
     .select("amount, created_at");
 
   if (txError) throw txError;
@@ -80,7 +80,7 @@ const getAnalyticsDataServer = createServerFn("GET", async () => {
 });
 
 function AnalyticsPage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getAnalyticsData = useServerFn(getAnalyticsDataServer);
 
   const { data: analyticsData, isLoading } = useQuery({
@@ -91,8 +91,8 @@ function AnalyticsPage() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div>

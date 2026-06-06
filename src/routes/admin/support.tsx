@@ -30,7 +30,7 @@ export const Route = createFileRoute("/admin/support")({
 });
 
 // Server function to identify merchants needing support
-const getMerchantsNeedingSupportServer = createServerFn("GET", async () => {
+const getMerchantsNeedingSupportServer = createServerFn({ method: "GET" }).handler(async () => {
   // Get all shops
   const { data: shops, error: shopsError } = await supabaseAdmin
     .from("shops")
@@ -40,7 +40,7 @@ const getMerchantsNeedingSupportServer = createServerFn("GET", async () => {
 
   // Get all transactions
   const { data: transactions, error: txError } = await supabaseAdmin
-    .from("transactions")
+    .from("sales")
     .select("*");
 
   if (txError) throw txError;
@@ -115,7 +115,7 @@ const getMerchantsNeedingSupportServer = createServerFn("GET", async () => {
 });
 
 function SupportPage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getMerchantsNeedingSupport = useServerFn(getMerchantsNeedingSupportServer);
 
   const { data: supportData, isLoading } = useQuery({
@@ -143,8 +143,8 @@ function SupportPage() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div>

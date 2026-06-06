@@ -32,7 +32,7 @@ export const Route = createFileRoute("/admin/logs")({
 });
 
 // Server function to fetch audit logs
-const getAuditLogsServer = createServerFn("GET", async () => {
+const getAuditLogsServer = createServerFn({ method: "GET" }).handler(async () => {
   const { data: logs, error: logsError } = await supabaseAdmin
     .from("audit_logs")
     .select("*")
@@ -55,7 +55,7 @@ const getAuditLogsServer = createServerFn("GET", async () => {
 });
 
 function AuditLogsPage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getAuditLogs = useServerFn(getAuditLogsServer);
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
@@ -98,8 +98,8 @@ function AuditLogsPage() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div className="flex justify-between items-start">

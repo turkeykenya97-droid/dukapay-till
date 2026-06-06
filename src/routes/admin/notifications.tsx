@@ -24,7 +24,7 @@ export const Route = createFileRoute("/admin/notifications")({
   component: NotificationsPage,
 });
 
-const getNotificationSettingsServer = createServerFn("GET", async () => {
+const getNotificationSettingsServer = createServerFn({ method: "GET" }).handler(async () => {
   return {
     emailAlerts: true,
     smsAlerts: false,
@@ -34,7 +34,7 @@ const getNotificationSettingsServer = createServerFn("GET", async () => {
   };
 });
 
-const saveNotificationSettingsServer = createServerFn("POST", async (payload: {
+const saveNotificationSettingsServer = createServerFn({ method: "POST" }).handler(async (payload: {
   emailAlerts: boolean;
   smsAlerts: boolean;
   adminEmail: string;
@@ -44,7 +44,7 @@ const saveNotificationSettingsServer = createServerFn("POST", async (payload: {
 });
 
 function NotificationsPage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getSettings = useServerFn(getNotificationSettingsServer);
   const saveSettings = useServerFn(saveNotificationSettingsServer);
 
@@ -79,8 +79,8 @@ function NotificationsPage() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div>

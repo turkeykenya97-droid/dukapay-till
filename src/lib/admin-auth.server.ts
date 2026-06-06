@@ -25,7 +25,7 @@ function setAdminSessionCookie(token: string) {
   });
 }
 
-export const adminLoginServer = createServerFn("POST", async (payload: {
+export const adminLoginServer = createServerFn({ method: "POST" }).handler(async (payload: {
   email: string;
   password: string;
 }) => {
@@ -70,7 +70,7 @@ export const adminLoginServer = createServerFn("POST", async (payload: {
   return { success: true };
 });
 
-export const adminLoginByPhoneServer = createServerFn("POST", async (payload: {
+export const adminLoginByPhoneServer = createServerFn({ method: "POST" }).handler(async (payload: {
   phone: string;
   password: string;
 }) => {
@@ -115,13 +115,13 @@ export const adminLoginByPhoneServer = createServerFn("POST", async (payload: {
   return { success: true };
 });
 
-export const adminLogoutServer = createServerFn("POST", async () => {
+export const adminLogoutServer = createServerFn({ method: "POST" }).handler(async () => {
   const { deleteCookie } = require("@tanstack/react-start/server");
   deleteCookie(ADMIN_SESSION_COOKIE);
   return { success: true };
 });
 
-export const getAdminSessionServer = createServerFn("GET", async () => {
+export const getAdminSessionServer = createServerFn({ method: "GET" }).handler(async () => {
   const { getCookie } = require("@tanstack/react-start/server");
   const token = getCookie(ADMIN_SESSION_COOKIE);
   if (!token) return null;
