@@ -20,7 +20,7 @@ export const Route = createFileRoute("/admin/system")({
   component: SystemHealthPage,
 });
 
-const getSystemStatusServer = createServerFn("GET", async () => {
+const getSystemStatusServer = createServerFn({ method: "GET" }).handler(async () => {
   // Test Supabase connection
   let supabaseStatus = "healthy";
   try {
@@ -44,7 +44,7 @@ const getSystemStatusServer = createServerFn("GET", async () => {
 });
 
 function SystemHealthPage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getSystemStatus = useServerFn(getSystemStatusServer);
 
   const { data: systemStatus, isLoading, refetch } = useQuery({
@@ -68,8 +68,8 @@ function SystemHealthPage() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div className="flex justify-between items-start">

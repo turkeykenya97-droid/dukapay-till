@@ -108,7 +108,7 @@ export const loginShop = createServerFn({ method: "POST" })
       if (!ok) throw new Error("Invalid phone or password");
 
       // Set admin session cookie inline here
-      const { setCookie } = require("@tanstack/react-start/server");
+      const { setCookie } = await import("@tanstack/react-start/server");
       const { signAdminJwt } = await import("@/lib/admin-jwt.server");
       
       // Update last_login

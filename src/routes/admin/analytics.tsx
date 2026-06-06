@@ -27,7 +27,7 @@ export const Route = createFileRoute("/admin/analytics")({
   component: AnalyticsPage,
 });
 
-const getAnalyticsDataServer = createServerFn("GET", async () => {
+const getAnalyticsDataServer = createServerFn({ method: "GET" }).handler(async () => {
   // Get all shops
   const { data: shops, error: shopsError } = await supabaseAdmin
     .from("shops")
@@ -35,10 +35,10 @@ const getAnalyticsDataServer = createServerFn("GET", async () => {
 
   if (shopsError) throw shopsError;
 
-  // Get all transactions
+  // Get all sales as transactions
   const { data: transactions, error: txError } = await supabaseAdmin
-    .from("transactions")
-    .select("amount, created_at");
+    .from("sales")
+    .select("total_amount, created_at");
 
   if (txError) throw txError;
 
@@ -58,15 +58,16 @@ const getAnalyticsDataServer = createServerFn("GET", async () => {
   const basicCount = (shops || []).filter((s) => s.plan === "basic").length;
   const proCount = (shops || []).filter((s) => s.plan === "pro").length;
 
-  // Top merchants by transaction volume
+  // Top merchants by transaction volume (with id for keys)
   const topMerchants = (shops || [])
+    .map((s, i) => ({ ...s, id: `top-${i}` }))
     .sort((a, b) => (b.transaction_count || 0) - (a.transaction_count || 0))
     .slice(0, 10);
 
   // Average transaction value
   const avgTxValue =
     (transactions || []).length > 0
-      ? (transactions || []).reduce((sum, t) => sum + (t.amount || 0), 0) / (transactions || []).length
+      ? (transactions || []).reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0) / (transactions || []).length
       : 0;
 
   return {
@@ -80,7 +81,7 @@ const getAnalyticsDataServer = createServerFn("GET", async () => {
 });
 
 function AnalyticsPage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getAnalyticsData = useServerFn(getAnalyticsDataServer);
 
   const { data: analyticsData, isLoading } = useQuery({
@@ -91,8 +92,8 @@ function AnalyticsPage() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div>
