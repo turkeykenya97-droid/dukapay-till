@@ -8,7 +8,7 @@
     "directory": "./dist/client"
   },
   "build": {
-    "command": "bun run build"
+    "command": "npm run build"
   },
   "env": {
     "production": {}
