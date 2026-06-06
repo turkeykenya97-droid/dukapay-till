@@ -98,6 +98,30 @@ export const registerShop = createServerFn({ method: "POST" })
 export const loginShop = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => loginSchema.parse(d))
   .handler(async ({ data }) => {
+    // Check if phone belongs to an admin first
+    const { data: admin, error: adminError } = await supabaseAdmin
+      .from("admin_users")
+      .select("id, password_hash")
+      .eq("phone", data.phone)
+      .maybeSingle();
+
+    if (!adminError && admin) {
+      // It's an admin account - verify password and login as admin
+      const ok = await bcrypt.compare(data.password, admin.password_hash);
+      if (!ok) throw new Error("Invalid phone or password");
+
+      // Import admin auth functions and login
+      const { adminLoginByPhone } = await import("@/lib/admin-auth.functions");
+      await adminLoginByPhone(data.phone, data.password);
+      
+      return {
+        shop_id: admin.id,
+        is_admin: true,
+        needs_onboarding: false,
+      };
+    }
+
+    // Not an admin - check if it's a merchant
     const { data: shop, error } = await supabaseAdmin
       .from("shops")
       .select("id, phone, password_hash, payment_channel_id, payment_api_key")
@@ -116,6 +140,7 @@ export const loginShop = createServerFn({ method: "POST" })
     setSessionCookie(token);
     return {
       shop_id: shop.id,
+      is_admin: false,
       needs_onboarding: !hasPaymentChannel(shop),
     };
   });

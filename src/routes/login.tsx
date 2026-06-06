@@ -33,7 +33,11 @@ function LoginPage() {
     onSuccess: (data) => {
       console.log("[login] Success:", data);
       toast.success("Welcome back!");
-      navigate({ to: data.needs_onboarding ? "/onboarding" : "/dashboard" });
+      if (data.is_admin) {
+        navigate({ to: "/admin/dashboard" });
+      } else {
+        navigate({ to: data.needs_onboarding ? "/onboarding" : "/dashboard" });
+      }
     },
     onError: (e: Error) => {
       console.error("[login error]", e);
