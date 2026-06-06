@@ -147,7 +147,7 @@ export const createSale = createServerFn({ method: "POST" })
         phone_number: data.customer_phone,
         external_reference: reference,
         description: `Sale ${sale.id}`,
-        merchant_api_key: shop.payment_api_key,
+        merchant_till_number: shop.payment_channel_id,
       });
       
       // Increment transaction count after successful STK push
