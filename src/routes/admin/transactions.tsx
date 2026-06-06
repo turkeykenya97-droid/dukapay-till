@@ -49,11 +49,11 @@ const getTransactionsServer = createServerFn({ method: "GET" }).handler(async ()
   if (shopsError) throw shopsError;
 
   // Calculate metrics
-  const completed = transactions?.filter((t) => t.status === "completed") || [];
-  const failed = transactions?.filter((t) => t.status === "failed") || [];
-  const pending = transactions?.filter((t) => t.status === "pending") || [];
+  const completed = transactions?.filter((t) => t.payment_status === "completed") || [];
+  const failed = transactions?.filter((t) => t.payment_status === "failed") || [];
+  const pending = transactions?.filter((t) => t.payment_status === "pending") || [];
 
-  const totalVolume = completed.reduce((sum, t) => sum + (t.amount || 0), 0);
+  const totalVolume = completed.reduce((sum, t) => sum + (t.total_amount || 0), 0);
   const successRate =
     transactions && transactions.length > 0
       ? ((completed.length / transactions.length) * 100).toFixed(1)
@@ -93,10 +93,10 @@ function TransactionsPage() {
     const matchesSearch =
       merchant?.shop_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       merchant?.phone?.includes(searchTerm) ||
-      t.phone?.includes(searchTerm) ||
-      t.checkout_request_id?.includes(searchTerm);
+      t.customer_phone?.includes(searchTerm) ||
+      t.payment_checkout_request_id?.includes(searchTerm);
 
-    const matchesStatus = statusFilter === "all" || t.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || t.payment_status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -248,29 +248,29 @@ function TransactionsPage() {
                           <TableCell className="font-medium">
                             {getMerchantName(transaction.shop_id)}
                           </TableCell>
-                          <TableCell className="text-sm">{transaction.phone}</TableCell>
+                          <TableCell className="text-sm">{transaction.customer_phone}</TableCell>
                           <TableCell className="font-medium">
-                            KES {transaction.amount?.toLocaleString()}
+                            KES {transaction.total_amount?.toLocaleString()}
                           </TableCell>
                           <TableCell>
                             <Badge
                               variant={
-                                transaction.status === "completed"
+                                transaction.payment_status === "completed"
                                   ? "default"
-                                  : transaction.status === "pending"
+                                  : transaction.payment_status === "pending"
                                     ? "secondary"
                                     : "destructive"
                               }
                             >
-                              {transaction.status?.toUpperCase()}
+                              {transaction.payment_status?.toUpperCase()}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-xs font-mono truncate max-w-xs">
-                            {transaction.checkout_request_id || "—"}
+                            {transaction.payment_checkout_request_id || "—"}
                           </TableCell>
                           <TableCell className="text-sm">
-                            {transaction.mpesa_receipt ? (
-                              <Badge variant="outline">{transaction.mpesa_receipt}</Badge>
+                            {transaction.payment_reference ? (
+                              <Badge variant="outline">{transaction.payment_reference}</Badge>
                             ) : (
                               "—"
                             )}
