@@ -13,7 +13,7 @@ export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
       { title: "Create your DukaPOS account" },
-      { name: "description", content: "Start your 30-day free trial of DukaPOS." },
+      { name: "description", content: "Start your 14-day free trial of DukaPOS." },
     ],
   }),
   component: RegisterPage,
@@ -94,7 +94,7 @@ function RegisterPage() {
             <Store className="h-7 w-7" />
           </div>
           <h1 className="mt-4 text-2xl font-bold text-foreground">Create account</h1>
-          <p className="text-sm text-muted-foreground">30-day free trial, no card needed</p>
+          <p className="text-sm text-muted-foreground">14-day free trial, no card needed</p>
         </div>
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           {mutation.isError && (

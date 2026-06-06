@@ -50,6 +50,7 @@ export const initiateRenewal = createServerFn({ method: "POST" })
       phone_number: shop.phone,
       external_reference: reference,
       description,
+      merchant_api_key: platformKey,
     });
     // Store CheckoutRequestID in payment_reference for webhook reconciliation.
     await supabaseAdmin

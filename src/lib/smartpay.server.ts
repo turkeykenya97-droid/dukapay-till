@@ -146,6 +146,7 @@ export interface StkPushArgs {
   phone_number: string;
   external_reference: string;
   description?: string;
+  merchant_api_key: string;
 }
 
 export interface StkPushResult {
@@ -159,7 +160,7 @@ export async function sendStkPush(args: StkPushArgs): Promise<StkPushResult> {
   const formatted = formatKenyanPhone(args.phone_number);
   const json = await smartpayFetch("/stk/push", {
     method: "POST",
-    apiKey: bootstrapKey(),
+    apiKey: args.merchant_api_key,
     body: JSON.stringify({
       phone: formatted,
       amount: Math.round(args.amount),

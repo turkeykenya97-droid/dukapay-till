@@ -138,7 +138,7 @@ export const Route = createFileRoute("/api/public/webhooks/smartpay")({
                 ? Math.max(Date.now(), new Date(shop.subscription_expiry).getTime())
                 : Date.now();
               const newExpiry = new Date(
-                base + 30 * 24 * 60 * 60 * 1000
+                base + 14 * 24 * 60 * 60 * 1000
               ).toISOString();
               
               // Get the plan from the payment record (will work once migration is applied)

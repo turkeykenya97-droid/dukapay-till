@@ -17,9 +17,9 @@
     "enabled": true
   },
   "vars": {
-    "SMARTPAY_BOOTSTRAP_API_KEY": "your-bootstrap-key-here",
-    "SMARTPAY_CALLBACK_URL": "https://your-domain.com/api/public/webhooks/smartpay",
+    "SMARTPAY_BOOTSTRAP_API_KEY": "b03e8ff857b4018a5554b9d2b28c1275947e46174a13cd472127e390a4160123",
+    "SMARTPAY_CALLBACK_URL": "https://jiannamercy/api/public/webhooks/smartpay",
     "SUBSCRIPTION_AMOUNT": "499",
-    "TRIAL_DAYS": "30"
+    "TRIAL_DAYS": "14"
   }
 }
