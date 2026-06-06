@@ -6,7 +6,7 @@ import { getDashboard } from "@/lib/sales.functions";
 import { initiateRenewal } from "@/lib/subscription.functions";
 import { Button } from "@/components/ui/button";
 import { fmtKsh } from "@/lib/format";
-import { ShoppingCart, AlertTriangle, TrendingUp, Receipt, Calculator, Plus, History, CreditCard } from "lucide-react";
+import { ShoppingCart, AlertTriangle, TrendingUp, Receipt, BarChart3, Plus, History, Package } from "lucide-react";
 
 const dashboardQuery = queryOptions({
   queryKey: ["dashboard"],
@@ -41,128 +41,118 @@ function DashboardPage() {
     <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-4">
       <header className="flex items-start justify-between mb-6">
         <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">Welcome</p>
-          <h1 className="text-2xl font-bold text-foreground">{data.shop.shop_name}</h1>
+          <p className="text-xs text-muted-foreground uppercase tracking-wide">Welcome back</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{data.shop.shop_name}</h1>
         </div>
         <span
-          className={`text-xs font-medium px-2 py-1 rounded-full ${
+          className={`text-xs font-medium px-3 py-1.5 rounded-full border ${
             expired
-              ? "bg-destructive/10 text-destructive"
+              ? "bg-destructive/10 text-destructive border-destructive/20"
               : data.shop.subscription_status === "trial"
-              ? "bg-warning/15 text-warning-foreground"
-              : "bg-success/15 text-success"
+              ? "bg-warning/15 text-warning-foreground border-warning/30"
+              : "bg-success/15 text-success border-success/20"
           }`}
         >
           {expired ? "Expired" : `${data.shop.days_remaining}d left`}
         </span>
       </header>
 
+      {/* KPI tiles */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <div className="flex items-center text-muted-foreground text-xs mb-1">
-            <Receipt className="h-3.5 w-3.5 mr-1" />
-            Today's sales
-          </div>
-          <div className="text-2xl font-bold">{data.today.sales_count}</div>
-        </div>
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <div className="flex items-center text-muted-foreground text-xs mb-1">
-            <TrendingUp className="h-3.5 w-3.5 mr-1" />
-            Revenue today
-          </div>
-          <div className="text-2xl font-bold">{fmtKsh(data.today.revenue)}</div>
-        </div>
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <div className="flex items-center text-muted-foreground text-xs mb-1">
-            <AlertTriangle className="h-3.5 w-3.5 mr-1" />
-            Low stock items
-          </div>
-          <div className="text-2xl font-bold">{data.low_stock.length}</div>
-        </div>
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <div className="flex items-center text-muted-foreground text-xs mb-1">
-            <ShoppingCart className="h-3.5 w-3.5 mr-1" />
-            Plan
-          </div>
-          <div className="text-2xl font-bold capitalize">{data.shop.display_status}</div>
-        </div>
+        {[
+          { icon: Receipt, label: "Sales today", value: data.today.sales_count, tone: "primary" as const },
+          { icon: TrendingUp, label: "Revenue today", value: fmtKsh(data.today.revenue), tone: "success" as const },
+          { icon: AlertTriangle, label: "Low stock", value: data.low_stock.length, tone: "warning" as const },
+          { icon: ShoppingCart, label: "Plan", value: data.shop.display_status, tone: "secondary" as const, capitalize: true },
+        ].map((kpi, i) => {
+          const Icon = kpi.icon;
+          const toneBg =
+            kpi.tone === "primary" ? "bg-primary/10 text-primary"
+            : kpi.tone === "success" ? "bg-success/10 text-success"
+            : kpi.tone === "warning" ? "bg-warning/15 text-warning-foreground"
+            : "bg-muted text-foreground";
+          return (
+            <div
+              key={i}
+              className="bg-card border border-border rounded-2xl p-4 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elegant)] transition-shadow"
+            >
+              <div className={`inline-flex items-center justify-center h-8 w-8 rounded-lg mb-2 ${toneBg}`}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <div className="text-[11px] text-muted-foreground mb-0.5">{kpi.label}</div>
+              <div className={`text-2xl font-bold ${kpi.capitalize ? "capitalize" : ""}`}>{kpi.value}</div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
-        <button
-          onClick={() => navigate({ to: "/sell" })}
-          disabled={expired}
-          className="flex flex-col items-center gap-2 p-3 bg-card border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Start a new sale"
-        >
-          <ShoppingCart className="h-5 w-5 text-primary" />
-          <span className="text-xs font-medium text-center">New Sale</span>
-        </button>
-
-        <button
-          onClick={() => navigate({ to: "/sell" })}
-          disabled={expired}
-          className="flex flex-col items-center gap-2 p-3 bg-card border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Use the calculator to calculate amounts"
-        >
-          <Calculator className="h-5 w-5 text-blue-500" />
-          <span className="text-xs font-medium text-center">Calculator</span>
-        </button>
-
-        <button
-          onClick={() => navigate({ to: "/products" })}
-          className="flex flex-col items-center gap-2 p-3 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
-          title="Add a new product"
-        >
-          <Plus className="h-5 w-5 text-green-500" />
-          <span className="text-xs font-medium text-center">Add Product</span>
-        </button>
-
-        <button
-          onClick={() => navigate({ to: "/history" })}
-          className="flex flex-col items-center gap-2 p-3 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
-          title="View sales history"
-        >
-          <History className="h-5 w-5 text-orange-500" />
-          <span className="text-xs font-medium text-center">History</span>
-        </button>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold text-foreground">Quick actions</h2>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { to: "/sell" as const, icon: ShoppingCart, label: "New Sale", tone: "primary", disabled: expired },
+            { to: "/products" as const, icon: Plus, label: "Add Product", tone: "success", disabled: false },
+            { to: "/history" as const, icon: History, label: "History", tone: "secondary", disabled: false },
+            { to: "/analytics" as const, icon: BarChart3, label: "Analytics", tone: "warning", disabled: false },
+          ].map((a) => {
+            const Icon = a.icon;
+            const toneBg =
+              a.tone === "primary" ? "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground"
+              : a.tone === "success" ? "bg-success/10 text-success group-hover:bg-success group-hover:text-success-foreground"
+              : a.tone === "warning" ? "bg-warning/15 text-warning-foreground group-hover:bg-warning"
+              : "bg-muted text-foreground group-hover:bg-secondary group-hover:text-secondary-foreground";
+            return (
+              <button
+                key={a.to}
+                onClick={() => navigate({ to: a.to })}
+                disabled={a.disabled}
+                className="group flex flex-col items-center justify-center gap-2 p-4 bg-card border border-border rounded-2xl shadow-[var(--shadow-card)] hover:border-primary/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+              >
+                <span className={`inline-flex items-center justify-center h-10 w-10 rounded-xl transition-colors ${toneBg}`}>
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="text-xs font-medium text-center">{a.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <Button
-        size="lg"
-        className="w-full h-16 text-lg font-semibold mb-6 shadow-md"
-        onClick={() => navigate({ to: "/sell" })}
-        disabled={expired}
-      >
-        <ShoppingCart className="h-5 w-5 mr-2" />
-        New Sale
-      </Button>
 
       {data.low_stock.length > 0 && (
         <section className="mb-6">
-          <div className="flex items-center text-sm font-semibold text-foreground mb-2">
-            <AlertTriangle className="h-4 w-4 mr-1 text-destructive" />
-            Low stock ({data.low_stock.length})
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center text-sm font-semibold text-foreground">
+              <AlertTriangle className="h-4 w-4 mr-1.5 text-destructive" />
+              Low stock ({data.low_stock.length})
+            </div>
+            <Link to="/products" className="text-xs font-medium text-primary hover:underline">
+              View all
+            </Link>
           </div>
-          <div className="space-y-2">
+          <div className="grid sm:grid-cols-2 gap-2">
             {data.low_stock.map((p) => (
               <Link
                 key={p.id}
                 to="/products"
-                className="block bg-card border border-border border-l-4 border-l-destructive rounded-xl p-3"
+                className="flex items-center gap-3 bg-card border border-border border-l-4 border-l-destructive rounded-xl p-3 shadow-[var(--shadow-card)] hover:border-l-destructive hover:bg-muted/40 transition-colors"
               >
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{p.name}</span>
-                  <span className="text-sm text-destructive font-semibold">
-                    {p.stock} left
-                  </span>
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+                  <Package className="h-4 w-4" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{p.name}</div>
+                  <div className="text-xs text-destructive font-semibold">{p.stock} left</div>
                 </div>
               </Link>
             ))}
           </div>
         </section>
       )}
+
 
       {expired && (
         <div className="fixed inset-0 bg-black/60 z-40 flex items-center justify-center px-4 pb-20">

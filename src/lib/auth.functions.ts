@@ -451,26 +451,16 @@ export const getPlans = createServerFn({ method: "GET" }).handler(async () => {
 /**
  * Update till settings for a shop
  */
-export const updateTillSettings = createServerFn({ method: "POST" }).handler(
-  async (
-    opts: Parameters<typeof createServerFn<{ method: "POST" }>>[0] & {
-      data: {
-        till_type: "paybill" | "till" | "bank";
-        till_number: string;
-      };
-    }
-  ) => {
+const updateTillSchema = z.object({
+  till_type: z.enum(["paybill", "till", "bank"]),
+  till_number: z.string().trim().regex(/^\d{4,}$/, "Till number must be at least 4 digits"),
+});
+
+export const updateTillSettings = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => updateTillSchema.parse(d))
+  .handler(async ({ data }) => {
     const s = await requireSession();
-    const { till_type, till_number } = opts.data;
-
-    // Validate till number format (should be numeric)
-    if (!/^\d+$/.test(till_number.trim())) {
-      throw new Error("Till number must contain only digits");
-    }
-
-    if (till_number.trim().length < 4) {
-      throw new Error("Till number must be at least 4 digits");
-    }
+    const { till_type, till_number } = data;
 
     const { error } = await supabaseAdmin
       .from("shops")
@@ -486,5 +476,4 @@ export const updateTillSettings = createServerFn({ method: "POST" }).handler(
     }
 
     return { ok: true };
-  }
-);
+  });

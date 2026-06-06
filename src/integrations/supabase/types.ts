@@ -182,16 +182,16 @@ export type Database = {
           phone: string
           pin_hash: string
           pin_valid_until: string | null
+          plan: string
           shop_name: string
           subscription_expiry: string
           subscription_status: string
           till_number: string | null
           till_type: string | null
-          trial_start: string
-          updated_at: string
-          plan: string
           transaction_count: number
           transaction_reset_date: string
+          trial_start: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
@@ -203,16 +203,16 @@ export type Database = {
           phone: string
           pin_hash: string
           pin_valid_until?: string | null
+          plan?: string
           shop_name: string
           subscription_expiry: string
           subscription_status?: string
           till_number?: string | null
           till_type?: string | null
-          trial_start?: string
-          updated_at?: string
-          plan?: string
           transaction_count?: number
           transaction_reset_date?: string
+          trial_start?: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
@@ -224,16 +224,16 @@ export type Database = {
           phone?: string
           pin_hash?: string
           pin_valid_until?: string | null
+          plan?: string
           shop_name?: string
           subscription_expiry?: string
           subscription_status?: string
           till_number?: string | null
           till_type?: string | null
-          trial_start?: string
-          updated_at?: string
-          plan?: string
           transaction_count?: number
           transaction_reset_date?: string
+          trial_start?: string
+          updated_at?: string
         }
         Relationships: []
       }

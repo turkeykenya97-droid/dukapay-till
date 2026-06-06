@@ -61,13 +61,26 @@ function AuthenticatedLayout() {
     );
   }
 
+  const initials = shop.shop_name
+    .split(/\s+/)
+    .map((w: string) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
     <div className="min-h-screen bg-background lg:flex">
       {/* Desktop side nav */}
-      <aside className="hidden lg:flex flex-col w-56 border-r border-border bg-card sticky top-0 h-screen">
-        <div className="px-6 py-5 border-b border-border">
-          <div className="text-lg font-bold text-primary">DukaPOS</div>
-          <div className="text-xs text-muted-foreground truncate">{shop.shop_name}</div>
+      <aside className="hidden lg:flex flex-col w-60 border-r border-border bg-card sticky top-0 h-screen">
+        <div className="px-5 py-5 border-b border-border flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center text-primary-foreground font-bold text-sm" style={{ background: "var(--gradient-primary)" }}>
+            {initials || "DP"}
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-foreground leading-tight">DukaPOS</div>
+            <div className="text-xs text-muted-foreground truncate">{shop.shop_name}</div>
+          </div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
           {items.map((it) => {
@@ -77,12 +90,13 @@ function AuthenticatedLayout() {
               <Link
                 key={it.to}
                 to={it.to}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   active
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
+                {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r bg-primary" />}
                 <Icon className="h-4 w-4" />
                 {it.label}
               </Link>
@@ -91,7 +105,7 @@ function AuthenticatedLayout() {
         </nav>
         <button
           onClick={() => logoutMutation.mutate()}
-          className="m-3 flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="m-3 flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
         >
           <LogOut className="h-4 w-4" />
           Sign out
@@ -99,13 +113,16 @@ function AuthenticatedLayout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 min-w-0 pb-20 lg:pb-6">
+      <main className="flex-1 min-w-0 pb-24 lg:pb-6">
         <Outlet />
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 inset-x-0 bg-card border-t border-border z-30 lg:hidden">
-        <div className="max-w-2xl mx-auto flex items-center justify-around">
+      <nav
+        className="fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur border-t border-border z-30 lg:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div className="max-w-2xl mx-auto flex items-center justify-around px-1">
           {primaryItems.map((it) => {
             const active = location.pathname.startsWith(it.to);
             const Icon = it.icon;
@@ -113,21 +130,27 @@ function AuthenticatedLayout() {
               <Link
                 key={it.to}
                 to={it.to}
-                className={`flex-1 flex flex-col items-center py-3 text-[10px] transition-colors ${
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                }`}
+                className="flex-1 flex flex-col items-center py-2.5 text-[10px] transition-colors"
               >
-                <Icon className="h-5 w-5 mb-0.5" />
-                {it.label}
+                <span className={`inline-flex items-center justify-center h-9 w-12 rounded-xl mb-0.5 transition-colors ${
+                  active ? "bg-primary/15 text-primary" : "text-muted-foreground"
+                }`}>
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className={active ? "text-primary font-semibold" : "text-muted-foreground"}>
+                  {it.label}
+                </span>
               </Link>
             );
           })}
-          
+
           {/* More menu for secondary items */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex-1 flex flex-col items-center py-3 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-                <MoreVertical className="h-5 w-5 mb-0.5" />
+              <button className="flex-1 flex flex-col items-center py-2.5 text-[10px] text-muted-foreground">
+                <span className="inline-flex items-center justify-center h-9 w-12 rounded-xl mb-0.5">
+                  <MoreVertical className="h-5 w-5" />
+                </span>
                 More
               </button>
             </DropdownMenuTrigger>
@@ -136,16 +159,12 @@ function AuthenticatedLayout() {
                 const Icon = it.icon;
                 const active = location.pathname.startsWith(it.to);
                 return (
-                  <Link
-                    key={it.to}
-                    to={it.to}
-                    asChild
-                  >
-                    <DropdownMenuItem className={active ? "bg-primary/10 text-primary" : ""}>
+                  <DropdownMenuItem key={it.to} asChild className={active ? "bg-primary/10 text-primary" : ""}>
+                    <Link to={it.to}>
                       <Icon className="h-4 w-4 mr-2" />
                       {it.label}
-                    </DropdownMenuItem>
-                  </Link>
+                    </Link>
+                  </DropdownMenuItem>
                 );
               })}
               <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
@@ -156,6 +175,7 @@ function AuthenticatedLayout() {
           </DropdownMenu>
         </div>
       </nav>
+
       
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />

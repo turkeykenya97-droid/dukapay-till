@@ -244,7 +244,7 @@ function ProfilePage() {
             <div>
               <p className="text-xs text-muted-foreground mb-1">Till Type</p>
               <p className="text-sm font-medium">
-                {profile.till_type === "paybill" ? "PayBill" : profile.till_type?.charAt(0).toUpperCase() + profile.till_type?.slice(1)}
+                {profile.till_type === "paybill" ? "PayBill" : (profile.till_type ?? "").charAt(0).toUpperCase() + (profile.till_type ?? "").slice(1)}
               </p>
             </div>
             <div>
@@ -440,7 +440,7 @@ function ProfilePage() {
               <select
                 id="till-type"
                 value={tillType}
-                onChange={(e) => setTillType(e.target.value)}
+                onChange={(e) => setTillType(e.target.value as "till" | "paybill" | "bank")}
                 className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
               >
                 <option value="till">Till</option>
