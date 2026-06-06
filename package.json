@@ -1,7 +1,14 @@
 {
   "name": "tanstack_start_ts",
   "private": true,
-  "sideEffects": ["src/lib/error-capture.ts"],
+  "sideEffects": [
+    "src/lib/error-capture.ts",
+    "src/lib/admin-jwt.server.ts",
+    "src/lib/admin-auth.server.ts",
+    "src/lib/session.server.ts",
+    "src/lib/jwt.server.ts",
+    "src/lib/smartpay.server.ts"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite dev",
