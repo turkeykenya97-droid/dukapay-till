@@ -34,14 +34,18 @@ const getNotificationSettingsServer = createServerFn({ method: "GET" }).handler(
   };
 });
 
-const saveNotificationSettingsServer = createServerFn({ method: "POST" }).handler(async (payload: {
-  emailAlerts: boolean;
-  smsAlerts: boolean;
-  adminEmail: string;
-  adminPhone: string;
-}) => {
-  return { success: true };
+const notifSettingsSchema = z.object({
+  emailAlerts: z.boolean(),
+  smsAlerts: z.boolean(),
+  adminEmail: z.string(),
+  adminPhone: z.string(),
 });
+
+const saveNotificationSettingsServer = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => notifSettingsSchema.parse(d))
+  .handler(async () => {
+    return { success: true };
+  });
 
 function NotificationsPage() {
   const ctx = Route.useRouteContext();
@@ -53,16 +57,19 @@ function NotificationsPage() {
   const [adminEmail, setAdminEmail] = useState("admin@dukapos.com");
   const [adminPhone, setAdminPhone] = useState("+254712345678");
 
-  const { isLoading: settingsLoading } = useQuery({
+  const { data: settingsData, isLoading: settingsLoading } = useQuery({
     queryKey: ["notification-settings"],
     queryFn: () => getSettings(),
-    onSuccess: (data) => {
-      setEmailAlerts(data.emailAlerts);
-      setSmsAlerts(data.smsAlerts);
-      setAdminEmail(data.adminEmail);
-      setAdminPhone(data.adminPhone);
-    },
   });
+
+  useEffect(() => {
+    if (settingsData) {
+      setEmailAlerts(settingsData.emailAlerts);
+      setSmsAlerts(settingsData.smsAlerts);
+      setAdminEmail(settingsData.adminEmail);
+      setAdminPhone(settingsData.adminPhone);
+    }
+  }, [settingsData]);
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -72,7 +79,7 @@ function NotificationsPage() {
     onSuccess: () => {
       toast.success("Notification settings saved");
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast.error("Failed to save settings");
     },
   });

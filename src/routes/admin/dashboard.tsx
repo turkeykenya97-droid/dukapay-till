@@ -67,11 +67,11 @@ const getDashboardMetricsServer = createServerFn({ method: "GET" }).handler(asyn
   const basicCount = shops?.filter((s) => s.plan === "basic").length || 0;
   const proCount = shops?.filter((s) => s.plan === "pro").length || 0;
 
-  // Get recent transactions count
-  const { data: transactions, error: transError } = await supabaseAdmin
+  // Get recent transactions count (from sales table)
+  const { data: transactions } = await supabaseAdmin
     .from("sales")
-    .select("id, status", { count: "exact", head: false })
-    .eq("status", "completed");
+    .select("id, payment_status")
+    .eq("payment_status", "completed");
 
   const successfulTransactions = transactions?.length || 0;
 

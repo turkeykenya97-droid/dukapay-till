@@ -186,7 +186,7 @@ function AuditLogsPage() {
                       filteredLogs.map((log) => (
                         <TableRow key={log.id}>
                           <TableCell className="font-medium">
-                            {getAdminName(log.admin_id)}
+                            {getAdminName(log.admin_id ?? "")}
                           </TableCell>
                           <TableCell>
                             <Badge className={getActionBadge(log.action)}>
@@ -194,7 +194,9 @@ function AuditLogsPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm text-slate-600">
-                            {log.target_type?.charAt(0).toUpperCase() + log.target_type?.slice(1)}
+                            {log.target_type
+                              ? log.target_type.charAt(0).toUpperCase() + log.target_type.slice(1)
+                              : "—"}
                           </TableCell>
                           <TableCell className="text-sm font-mono">
                             {log.target_id}
