@@ -10,6 +10,9 @@
   "build": {
     "command": "npm run build"
   },
+  "bundling": {
+    "conditions": ["react-server", "import", "browser", "default", "require", "worker", "workerd"]
+  },
   "env": {
     "production": {}
   },

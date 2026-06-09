@@ -9,24 +9,6 @@ function bootstrapKey(): string {
   return k;
 }
 
-function bootstrapKeyId(): string {
-  const id = process.env.SMARTPAY_BOOTSTRAP_KEY_ID;
-  if (!id) throw new Error("Missing SMARTPAY_BOOTSTRAP_KEY_ID");
-  return id;
-}
-
-// Queue for destination switches to prevent race conditions
-let destinationLockPromise = Promise.resolve();
-
-function acquireDestinationLock<T>(fn: () => Promise<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    destinationLockPromise = destinationLockPromise
-      .then(() => fn())
-      .then(resolve)
-      .catch(reject);
-  });
-}
-
 function authHeader(apiKey: string): string {
   return `Bearer ${apiKey}`;
 }
@@ -164,8 +146,7 @@ export interface StkPushArgs {
   phone_number: string;
   external_reference: string;
   description?: string;
-  merchant_api_key?: string;
-  merchant_till_number?: string;
+  merchant_api_key: string;
 }
 
 export interface StkPushResult {
@@ -177,81 +158,11 @@ export interface StkPushResult {
 
 export async function sendStkPush(args: StkPushArgs): Promise<StkPushResult> {
   const formatted = formatKenyanPhone(args.phone_number);
-  
-  // Determine if we need to switch destinations
-  const shouldSwitchDestination = !!args.merchant_till_number;
-  const apiKey = args.merchant_api_key || bootstrapKey();
-  
-  // If switching destination, do it within a lock to prevent race conditions
-  if (shouldSwitchDestination) {
-    return acquireDestinationLock(async () => {
-      const keyId = bootstrapKeyId();
-      const walletDestination = { method: "wallet" };
-      const merchantDestination = {
-        method: "till",
-        till_number: args.merchant_till_number,
-        callbackurl: getCallbackUrl(),
-      };
 
-      try {
-        // Switch to merchant's till
-        await smartpayFetch(`/keys/${keyId}/destination`, {
-          method: "PUT",
-          apiKey: bootstrapKey(),
-          body: JSON.stringify(merchantDestination),
-        });
-
-        // Send the STK push
-        const json = await smartpayFetch("/stk/push", {
-          method: "POST",
-          apiKey: apiKey,
-          body: JSON.stringify({
-            phone: formatted,
-            amount: Math.round(args.amount),
-            account_reference: args.external_reference,
-            description: args.description ?? "SmartPay Payment",
-          }),
-        });
-
-        const checkoutRequestId =
-          (json.checkout_request_id as string) ||
-          (json.CheckoutRequestID as string) ||
-          "";
-        const merchantRequestId =
-          (json.merchant_request_id as string) ||
-          (json.MerchantRequestID as string) ||
-          undefined;
-
-        if (!checkoutRequestId) {
-          throw new Error("SmartPay did not return a checkout request id");
-        }
-
-        return {
-          reference: args.external_reference,
-          checkout_request_id: checkoutRequestId,
-          merchant_request_id: merchantRequestId,
-          raw: json,
-        };
-      } finally {
-        // Always switch back to wallet, even if push failed
-        try {
-          await smartpayFetch(`/keys/${keyId}/destination`, {
-            method: "PUT",
-            apiKey: bootstrapKey(),
-            body: JSON.stringify(walletDestination),
-          });
-        } catch (e) {
-          console.error("[smartpay:switch-back-to-wallet]", e);
-          // Don't throw here - the push already completed
-        }
-      }
-    });
-  }
-
-  // Direct path for subscription payments (no destination switch needed)
+  // Send STK push using the provided API key (merchant key or bootstrap key)
   const json = await smartpayFetch("/stk/push", {
     method: "POST",
-    apiKey: apiKey,
+    apiKey: args.merchant_api_key,
     body: JSON.stringify({
       phone: formatted,
       amount: Math.round(args.amount),

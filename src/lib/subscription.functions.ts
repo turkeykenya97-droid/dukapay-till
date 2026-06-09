@@ -45,6 +45,7 @@ export const initiateRenewal = createServerFn({ method: "POST" })
 
   const reference = `SUB-${payment.id}`;
   try {
+    // Subscription payments use the platform's bootstrap key with wallet destination
     const stk = await sendStkPush({
       amount,
       phone_number: shop.phone,
