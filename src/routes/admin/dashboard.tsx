@@ -19,7 +19,7 @@ export const Route = createFileRoute("/admin/dashboard")({
 });
 
 // Server function to fetch dashboard metrics
-const getDashboardMetricsServer = createServerFn("GET", async () => {
+const getDashboardMetricsServer = createServerFn({ method: "GET" }).handler(async () => {
   // Get merchant counts by status
   const { data: shops, error: shopsError } = await supabaseAdmin
     .from("shops")
@@ -67,11 +67,11 @@ const getDashboardMetricsServer = createServerFn("GET", async () => {
   const basicCount = shops?.filter((s) => s.plan === "basic").length || 0;
   const proCount = shops?.filter((s) => s.plan === "pro").length || 0;
 
-  // Get recent transactions count
-  const { data: transactions, error: transError } = await supabaseAdmin
-    .from("transactions")
-    .select("id, status", { count: "exact", head: false })
-    .eq("status", "completed");
+  // Get recent transactions count (from sales table)
+  const { data: transactions } = await supabaseAdmin
+    .from("sales")
+    .select("id, payment_status")
+    .eq("payment_status", "completed");
 
   const successfulTransactions = transactions?.length || 0;
 
@@ -90,7 +90,7 @@ const getDashboardMetricsServer = createServerFn("GET", async () => {
 });
 
 function AdminDashboard() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getMetrics = useServerFn(getDashboardMetricsServer);
 
   const { data: metrics, isLoading } = useQuery({
@@ -101,8 +101,8 @@ function AdminDashboard() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div>

@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          last_login: string | null
+          password_hash: string
+          phone: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          last_login?: string | null
+          password_hash: string
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          last_login?: string | null
+          password_hash?: string
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pin_attempts: {
         Row: {
           attempt_count: number
@@ -240,26 +314,32 @@ export type Database = {
       subscription_payments: {
         Row: {
           amount: number
+          created_at: string
           id: string
           paid_at: string
           payment_reference: string | null
           payment_status: string
+          plan: string
           shop_id: string
         }
         Insert: {
           amount: number
+          created_at?: string
           id?: string
           paid_at?: string
           payment_reference?: string | null
           payment_status?: string
+          plan?: string
           shop_id: string
         }
         Update: {
           amount?: number
+          created_at?: string
           id?: string
           paid_at?: string
           payment_reference?: string | null
           payment_status?: string
+          plan?: string
           shop_id?: string
         }
         Relationships: [

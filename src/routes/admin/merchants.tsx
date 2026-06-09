@@ -32,7 +32,7 @@ export const Route = createFileRoute("/admin/merchants")({
 });
 
 // Server function to fetch merchants
-const getMerchantsServer = createServerFn("GET", async () => {
+const getMerchantsServer = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("shops")
     .select("*")
@@ -43,7 +43,7 @@ const getMerchantsServer = createServerFn("GET", async () => {
 });
 
 function MerchantsPage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getMerchants = useServerFn(getMerchantsServer);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "trial" | "active" | "expired">("all");
@@ -76,8 +76,8 @@ function MerchantsPage() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div className="flex justify-between items-start">

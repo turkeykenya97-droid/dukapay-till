@@ -30,7 +30,7 @@ export const Route = createFileRoute("/admin/support")({
 });
 
 // Server function to identify merchants needing support
-const getMerchantsNeedingSupportServer = createServerFn("GET", async () => {
+const getMerchantsNeedingSupportServer = createServerFn({ method: "GET" }).handler(async () => {
   // Get all shops
   const { data: shops, error: shopsError } = await supabaseAdmin
     .from("shops")
@@ -38,10 +38,10 @@ const getMerchantsNeedingSupportServer = createServerFn("GET", async () => {
 
   if (shopsError) throw shopsError;
 
-  // Get all transactions
+  // Get all transactions (sales)
   const { data: transactions, error: txError } = await supabaseAdmin
-    .from("transactions")
-    .select("*");
+    .from("sales")
+    .select("shop_id, payment_status");
 
   if (txError) throw txError;
 
@@ -76,7 +76,7 @@ const getMerchantsNeedingSupportServer = createServerFn("GET", async () => {
     // Issue 2: High failed transaction rate (>30%)
     const shopTransactions = transactions?.filter((t) => t.shop_id === shop.id) || [];
     if (shopTransactions.length > 0) {
-      const failedCount = shopTransactions.filter((t) => t.status === "failed").length;
+      const failedCount = shopTransactions.filter((t) => t.payment_status === "failed").length;
       const failureRate = (failedCount / shopTransactions.length) * 100;
       if (failureRate > 30) {
         issues.push({
@@ -115,7 +115,7 @@ const getMerchantsNeedingSupportServer = createServerFn("GET", async () => {
 });
 
 function SupportPage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getMerchantsNeedingSupport = useServerFn(getMerchantsNeedingSupportServer);
 
   const { data: supportData, isLoading } = useQuery({
@@ -143,8 +143,8 @@ function SupportPage() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div>

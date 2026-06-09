@@ -31,7 +31,7 @@ export const Route = createFileRoute("/admin/revenue")({
 });
 
 // Server function to fetch revenue data
-const getRevenueDataServer = createServerFn("GET", async () => {
+const getRevenueDataServer = createServerFn({ method: "GET" }).handler(async () => {
   // Get all subscription payments
   const { data: payments, error: paymentsError } = await supabaseAdmin
     .from("subscription_payments")
@@ -102,7 +102,7 @@ const getRevenueDataServer = createServerFn("GET", async () => {
 });
 
 function RevenuePage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getRevenueData = useServerFn(getRevenueDataServer);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed" | "failed">(
     "all"
@@ -129,8 +129,8 @@ function RevenuePage() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div>

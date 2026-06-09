@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { z } from "zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/admin/notifications")({
   component: NotificationsPage,
 });
 
-const getNotificationSettingsServer = createServerFn("GET", async () => {
+const getNotificationSettingsServer = createServerFn({ method: "GET" }).handler(async () => {
   return {
     emailAlerts: true,
     smsAlerts: false,
@@ -34,17 +35,21 @@ const getNotificationSettingsServer = createServerFn("GET", async () => {
   };
 });
 
-const saveNotificationSettingsServer = createServerFn("POST", async (payload: {
-  emailAlerts: boolean;
-  smsAlerts: boolean;
-  adminEmail: string;
-  adminPhone: string;
-}) => {
-  return { success: true };
+const notifSettingsSchema = z.object({
+  emailAlerts: z.boolean(),
+  smsAlerts: z.boolean(),
+  adminEmail: z.string(),
+  adminPhone: z.string(),
 });
 
+const saveNotificationSettingsServer = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => notifSettingsSchema.parse(d))
+  .handler(async () => {
+    return { success: true };
+  });
+
 function NotificationsPage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getSettings = useServerFn(getNotificationSettingsServer);
   const saveSettings = useServerFn(saveNotificationSettingsServer);
 
@@ -53,16 +58,19 @@ function NotificationsPage() {
   const [adminEmail, setAdminEmail] = useState("admin@dukapos.com");
   const [adminPhone, setAdminPhone] = useState("+254712345678");
 
-  const { isLoading: settingsLoading } = useQuery({
+  const { data: settingsData, isLoading: settingsLoading } = useQuery({
     queryKey: ["notification-settings"],
     queryFn: () => getSettings(),
-    onSuccess: (data) => {
-      setEmailAlerts(data.emailAlerts);
-      setSmsAlerts(data.smsAlerts);
-      setAdminEmail(data.adminEmail);
-      setAdminPhone(data.adminPhone);
-    },
   });
+
+  useEffect(() => {
+    if (settingsData) {
+      setEmailAlerts(settingsData.emailAlerts);
+      setSmsAlerts(settingsData.smsAlerts);
+      setAdminEmail(settingsData.adminEmail);
+      setAdminPhone(settingsData.adminPhone);
+    }
+  }, [settingsData]);
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -72,15 +80,15 @@ function NotificationsPage() {
     onSuccess: () => {
       toast.success("Notification settings saved");
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast.error("Failed to save settings");
     },
   });
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div>

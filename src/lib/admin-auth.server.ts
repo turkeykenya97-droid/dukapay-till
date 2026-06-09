@@ -1,8 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { ADMIN_SESSION_COOKIE, verifyAdminJwt, signAdminJwt, type AdminJwtPayload } from "./admin-jwt.server";
 import bcrypt from "bcryptjs";
+import { setCookie, deleteCookie, getCookie } from "@tanstack/react-start/server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import {
+  ADMIN_SESSION_COOKIE,
+  verifyAdminJwt,
+  signAdminJwt,
+  type AdminJwtPayload,
+} from "./admin-jwt.server";
 
 const adminLoginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -15,114 +21,79 @@ const adminLoginPhoneSchema = z.object({
 });
 
 function setAdminSessionCookie(token: string) {
-  const { setCookie } = require("@tanstack/react-start/server");
   setCookie(ADMIN_SESSION_COOKIE, token, {
     httpOnly: true,
     secure: true,
     sameSite: "none",
     path: "/",
-    maxAge: 60 * 60 * 8, // 8 hours
+    maxAge: 60 * 60 * 8,
   });
 }
 
-export const adminLoginServer = createServerFn("POST", async (payload: {
-  email: string;
-  password: string;
-}) => {
-  const parsed = adminLoginSchema.parse(payload);
-  
-  const { data, error } = await supabaseAdmin
-    .from("admin_users")
-    .select("id, email, password_hash, full_name")
-    .eq("email", parsed.email)
-    .maybeSingle();
+export const adminLoginServer = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => adminLoginSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { data: row, error } = await supabaseAdmin
+      .from("admin_users")
+      .select("id, email, password_hash, full_name")
+      .eq("email", data.email)
+      .maybeSingle();
 
-  if (error) {
-    console.error("[adminLogin:select]", error);
-    throw new Error("Authentication failed");
-  }
+    if (error) {
+      console.error("[adminLogin:select]", error);
+      throw new Error("Authentication failed");
+    }
+    if (!row) throw new Error("Invalid email or password");
 
-  if (!data) {
-    throw new Error("Invalid email or password");
-  }
+    const ok = await bcrypt.compare(data.password, row.password_hash);
+    if (!ok) throw new Error("Invalid email or password");
 
-  // Verify password
-  const passwordMatch = await bcrypt.compare(parsed.password, data.password_hash);
-  if (!passwordMatch) {
-    throw new Error("Invalid email or password");
-  }
+    await supabaseAdmin
+      .from("admin_users")
+      .update({ last_login: new Date().toISOString() })
+      .eq("id", row.id);
 
-  // Update last_login
-  await supabaseAdmin
-    .from("admin_users")
-    .update({ last_login: new Date().toISOString() })
-    .eq("id", data.id);
+    const jwtPayload: AdminJwtPayload = { admin_id: row.id, email: row.email };
+    const token = await signAdminJwt(jwtPayload);
+    setAdminSessionCookie(token);
+    return { success: true };
+  });
 
-  // Create JWT and set cookie
-  const jwtPayload: AdminJwtPayload = {
-    admin_id: data.id,
-    email: data.email,
-  };
+export const adminLoginByPhoneServer = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => adminLoginPhoneSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { data: row, error } = await supabaseAdmin
+      .from("admin_users")
+      .select("id, email, password_hash, full_name")
+      .eq("phone", data.phone)
+      .maybeSingle();
 
-  const token = await signAdminJwt(jwtPayload);
-  setAdminSessionCookie(token);
+    if (error) {
+      console.error("[adminLoginByPhone:select]", error);
+      throw new Error("Authentication failed");
+    }
+    if (!row) throw new Error("Invalid phone or password");
 
+    const ok = await bcrypt.compare(data.password, row.password_hash);
+    if (!ok) throw new Error("Invalid phone or password");
+
+    await supabaseAdmin
+      .from("admin_users")
+      .update({ last_login: new Date().toISOString() })
+      .eq("id", row.id);
+
+    const jwtPayload: AdminJwtPayload = { admin_id: row.id, email: row.email };
+    const token = await signAdminJwt(jwtPayload);
+    setAdminSessionCookie(token);
+    return { success: true };
+  });
+
+export const adminLogoutServer = createServerFn({ method: "POST" }).handler(async () => {
+  deleteCookie(ADMIN_SESSION_COOKIE, { path: "/" });
   return { success: true };
 });
 
-export const adminLoginByPhoneServer = createServerFn("POST", async (payload: {
-  phone: string;
-  password: string;
-}) => {
-  const parsed = adminLoginPhoneSchema.parse(payload);
-  
-  const { data, error } = await supabaseAdmin
-    .from("admin_users")
-    .select("id, email, password_hash, full_name")
-    .eq("phone", parsed.phone)
-    .maybeSingle();
-
-  if (error) {
-    console.error("[adminLoginByPhone:select]", error);
-    throw new Error("Authentication failed");
-  }
-
-  if (!data) {
-    throw new Error("Invalid phone or password");
-  }
-
-  // Verify password
-  const passwordMatch = await bcrypt.compare(parsed.password, data.password_hash);
-  if (!passwordMatch) {
-    throw new Error("Invalid phone or password");
-  }
-
-  // Update last_login
-  await supabaseAdmin
-    .from("admin_users")
-    .update({ last_login: new Date().toISOString() })
-    .eq("id", data.id);
-
-  // Create JWT and set cookie
-  const jwtPayload: AdminJwtPayload = {
-    admin_id: data.id,
-    email: data.email,
-  };
-
-  const token = await signAdminJwt(jwtPayload);
-  setAdminSessionCookie(token);
-
-  return { success: true };
-});
-
-export const adminLogoutServer = createServerFn("POST", async () => {
-  const { deleteCookie } = require("@tanstack/react-start/server");
-  deleteCookie(ADMIN_SESSION_COOKIE);
-  return { success: true };
-});
-
-export const getAdminSessionServer = createServerFn("GET", async () => {
-  const { getCookie } = require("@tanstack/react-start/server");
+export const getAdminSessionServer = createServerFn({ method: "GET" }).handler(async () => {
   const token = getCookie(ADMIN_SESSION_COOKIE);
   if (!token) return null;
   try {

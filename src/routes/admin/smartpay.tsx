@@ -29,7 +29,7 @@ export const Route = createFileRoute("/admin/smartpay")({
   component: SmartPayPage,
 });
 
-const getSmartPayStatusServer = createServerFn("GET", async () => {
+const getSmartPayStatusServer = createServerFn({ method: "GET" }).handler(async () => {
   const bootstrapKeyId = process.env.SMARTPAY_BOOTSTRAP_KEY_ID || "unknown";
   
   // Get all merchant keys from shops table
@@ -54,7 +54,7 @@ const getSmartPayStatusServer = createServerFn("GET", async () => {
 });
 
 function SmartPayPage() {
-  const { context } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
   const getSmartPayStatus = useServerFn(getSmartPayStatusServer);
 
   const { data: smartPayData, isLoading, refetch } = useQuery({
@@ -70,8 +70,8 @@ function SmartPayPage() {
 
   return (
     <AdminLayout
-      adminEmail={context.session?.email}
-      adminName={context.session?.email?.split("@")[0]}
+      adminEmail={ctx.session?.email}
+      adminName={ctx.session?.email?.split("@")[0]}
     >
       <div className="space-y-6">
         <div className="flex justify-between items-start">
