@@ -134,11 +134,9 @@ export const Route = createFileRoute("/api/public/webhooks/smartpay")({
                 .select("subscription_expiry")
                 .eq("id", subPayment.shop_id)
                 .single();
-              const base = shop?.subscription_expiry
-                ? Math.max(Date.now(), new Date(shop.subscription_expiry).getTime())
-                : Date.now();
+              // Start subscription from payment date, not from existing expiry
               const newExpiry = new Date(
-                base + 14 * 24 * 60 * 60 * 1000
+                Date.now() + 30 * 24 * 60 * 60 * 1000
               ).toISOString();
               
               // Get the plan from the payment record (will work once migration is applied)

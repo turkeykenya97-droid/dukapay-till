@@ -9,6 +9,15 @@ import { Button } from "@/components/ui/button";
 import { PlanBadge } from "@/components/ui/plan-badge";
 import { fmtDate } from "@/lib/format";
 import { CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const profileQuery = queryOptions({
   queryKey: ["profile"],
@@ -37,6 +46,7 @@ function SubscriptionPage() {
   const { data: plansData } = useSuspenseQuery(plansQuery);
   const qc = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState<"basic" | "pro" | null>(null);
+  const [showBasicWarning, setShowBasicWarning] = useState(false);
 
   const renew = useServerFn(initiateRenewal);
 
@@ -45,10 +55,22 @@ function SubscriptionPage() {
     onSuccess: () => {
       toast.success("M-Pesa prompt sent. Approve on your phone.");
       setSelectedPlan(null);
+      setShowBasicWarning(false);
       qc.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const handlePlanSelect = (plan: "basic" | "pro") => {
+    // Show warning if downgrading from trial (Pro features) to Basic
+    if (isTrialActive && plan === "basic") {
+      setSelectedPlan(plan);
+      setShowBasicWarning(true);
+    } else {
+      setSelectedPlan(plan);
+      renewalMutation.mutate(plan);
+    }
+  };
 
   const isTrialActive = profile.subscription_status === "trial";
   const isBasic = profile.plan === "basic";
@@ -155,10 +177,7 @@ function SubscriptionPage() {
                   </div>
                 ) : (
                   <Button
-                    onClick={() => {
-                      setSelectedPlan(plan.id as "basic" | "pro");
-                      renewalMutation.mutate(plan.id as "basic" | "pro");
-                    }}
+                    onClick={() => handlePlanSelect(plan.id as "basic" | "pro")}
                     disabled={renewalMutation.isPending}
                     variant={plan.id === "pro" ? "default" : "outline"}
                     className="w-full"
@@ -242,7 +261,7 @@ function SubscriptionPage() {
           <div className="border border-border rounded-lg p-4">
             <h3 className="font-semibold mb-2">What happens when my trial ends?</h3>
             <p className="text-sm text-muted-foreground">
-              Your account will be downgraded to the Basic plan on the expiry date unless you upgrade to Pro or renew your subscription.
+              If you don't subscribe before your 14-day trial ends, your account will be locked and you won't be able to process sales. Subscribe anytime during the trial to activate your chosen plan immediately.
             </p>
           </div>
           <div className="border border-border rounded-lg p-4">
@@ -259,6 +278,40 @@ function SubscriptionPage() {
           </div>
         </div>
       </div>
+
+      {/* Basic Plan Downgrade Warning Dialog */}
+      <AlertDialog open={showBasicWarning} onOpenChange={setShowBasicWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Downgrade to Basic Plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Subscribing to Basic will activate immediately and some Pro trial features will be restricted:
+              <ul className="list-disc list-inside mt-3 space-y-1 text-sm">
+                <li>Analytics & Reports</li>
+                <li>Stock Management</li>
+                <li>Digital & Printed Receipts</li>
+                <li>Priority Support</li>
+              </ul>
+              <p className="mt-3 font-medium">Subscribe to Pro to keep all features.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3 justify-end">
+            <AlertDialogCancel onClick={() => setShowBasicWarning(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (selectedPlan === "basic") {
+                  renewalMutation.mutate("basic");
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Continue to Basic
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
