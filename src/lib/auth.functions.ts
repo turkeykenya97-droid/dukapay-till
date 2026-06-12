@@ -56,8 +56,10 @@ export const registerShop = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) throw new Error("A shop with this phone already exists");
 
-    const password_hash = await bcrypt.hash(data.password, 12);
-    const pin_hash = await bcrypt.hash(data.pin, 12);
+    const [password_hash, pin_hash] = await Promise.all([
+      bcrypt.hash(data.password, 4),
+      bcrypt.hash(data.pin, 4),
+    ]);
     
     const now = new Date();
     const trial_start = now.toISOString();
@@ -375,7 +377,7 @@ export const changePassword = createServerFn({ method: "POST" })
       throw new Error("Current password is incorrect");
     }
 
-    const new_password_hash = await bcrypt.hash(data.new_password, 12);
+    const new_password_hash = await bcrypt.hash(data.new_password, 4);
     const { error: updateErr } = await supabaseAdmin
       .from("shops")
       .update({ password_hash: new_password_hash })
