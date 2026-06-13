@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import QRCode from "qrcode.react";
+import { useMemo, useRef } from "react";
+import QRCode from "react-qr-code";
 import { Button } from "@/components/ui/button";
 import { BarcodeMedium } from "@/components/Barcode";
 import { Download, Printer, X } from "lucide-react";
