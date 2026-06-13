@@ -1,9 +1,9 @@
-import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { adminLoginServer, getAdminSessionServer } from "@/lib/admin-auth.server";
+import { adminLoginServer } from "@/lib/admin-auth.server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,21 +16,10 @@ export const Route = createFileRoute("/admin/login")({
       { name: "description", content: "Admin portal login for Trusit." },
     ],
   }),
-  beforeLoad: async () => {
-    const session = await getAdminSessionServer();
-    if (session) {
-      throw new Error("Already authenticated");
-    }
-    return {};
-  },
-  errorComponent: () => {
-    return <Navigate to="/admin/dashboard" />;
-  },
   component: AdminLoginPage,
 });
 
 function AdminLoginPage() {
-  const navigate = useNavigate();
   const login = useServerFn(adminLoginServer);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +32,6 @@ function AdminLoginPage() {
     onSuccess: () => {
       console.log("[admin-login] Success");
       toast.success("Welcome back!");
-      // Use window.location.href to force full page reload and prevent infinite loops
       window.location.href = "/admin/dashboard";
     },
     onError: (e: Error) => {
