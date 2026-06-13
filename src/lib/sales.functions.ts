@@ -199,16 +199,35 @@ export const cancelSale = createServerFn({ method: "POST" })
 export const getSaleStatus = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => saleIdSchema.parse(d))
   .handler(async ({ data }) => {
-    const s = await requireSession();
-    const { data: sale, error } = await supabaseAdmin
-      .from("sales")
-      .select("id, total_amount, cash_paid, mpesa_amount, customer_phone, payment_status, sold_at")
-      .eq("id", data.id)
-      .eq("shop_id", s.shop_id)
-      .maybeSingle();
-    if (error) { console.error("[getSaleStatus]", error); throw new Error("Failed to load sale."); }
-    if (!sale) throw new Error("Sale not found");
-    return sale;
+    try {
+      const s = await requireSession();
+      const { data: sale, error } = await supabaseAdmin
+        .from("sales")
+        .select("id, total_amount, cash_paid, mpesa_amount, customer_phone, payment_status, sold_at")
+        .eq("id", data.id)
+        .eq("shop_id", s.shop_id)
+        .maybeSingle();
+      if (error) {
+        console.error("[getSaleStatus]", error);
+        throw new Error("Failed to load sale.");
+      }
+      if (!sale) {
+        console.warn("[getSaleStatus] Sale not found yet, returning pending state");
+        return {
+          id: data.id,
+          total_amount: 0,
+          cash_paid: 0,
+          mpesa_amount: 0,
+          customer_phone: "",
+          payment_status: "pending",
+          sold_at: new Date().toISOString(),
+        };
+      }
+      return sale;
+    } catch (err) {
+      console.error("[getSaleStatus] Caught error:", err);
+      throw err;
+    }
   });
 
 export const getSalesHistory = createServerFn({ method: "POST" })

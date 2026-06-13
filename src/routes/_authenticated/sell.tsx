@@ -106,24 +106,47 @@ function SellPage() {
     return () => clearTimeout(timer);
   }, [pendingSaleId, finalStatus, paymentTimeout]);
 
-  useQuery({
+  const { data: saleStatus } = useQuery({
     queryKey: ["sale-status", pendingSaleId],
-    queryFn: () => getStatus({ data: { id: pendingSaleId! } }),
+    queryFn: async () => {
+      try {
+        const result = await getStatus({ data: { id: pendingSaleId! } });
+        return result;
+      } catch (err) {
+        console.error("[sell:polling]", err);
+        // Return pending state on error so polling continues
+        return {
+          id: pendingSaleId,
+          total_amount: 0,
+          cash_paid: 0,
+          mpesa_amount: 0,
+          customer_phone: "",
+          payment_status: "pending",
+          sold_at: new Date().toISOString(),
+        };
+      }
+    },
     enabled: !!pendingSaleId && finalStatus === null && !paymentTimeout,
     refetchInterval: 3000,
-    select: (s) => {
-      if (s.payment_status === "completed" || s.payment_status === "failed") {
-        setFinalStatus(s.payment_status);
-        if (s.payment_status === "completed") {
+  });
+
+  // Handle sale status changes when polling updates
+  useEffect(() => {
+    if (!saleStatus || finalStatus !== null) return;
+    try {
+      if (saleStatus.payment_status === "completed" || saleStatus.payment_status === "failed") {
+        setFinalStatus(saleStatus.payment_status);
+        if (saleStatus.payment_status === "completed") {
           qc.invalidateQueries({ queryKey: ["products"] });
           qc.invalidateQueries({ queryKey: ["dashboard"] });
           qc.invalidateQueries({ queryKey: ["analytics"] });
           qc.invalidateQueries({ queryKey: ["history"] });
         }
       }
-      return s;
-    },
-  });
+    } catch (err) {
+      console.error("[sell:status-handler]", err);
+    }
+  }, [saleStatus, finalStatus, qc]);
 
   const total = useMemo(
     () => cart.reduce((s, i) => s + i.unit_price * i.quantity, 0),
