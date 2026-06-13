@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -6,18 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getAdminSessionServer } from "@/lib/admin-auth.server";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { AlertCircle, CheckCircle, Clock, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/admin/system")({
-  beforeLoad: async () => {
-    const session = await getAdminSessionServer();
-    if (!session) throw new Error("Not authenticated");
-    return { session };
-  },
-  errorComponent: () => <Navigate to="/admin/login" />,
   component: SystemHealthPage,
 });
 

@@ -97,46 +97,7 @@ export const registerShop = createServerFn({ method: "POST" })
 export const loginShop = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => loginSchema.parse(d))
   .handler(async ({ data }) => {
-    // Check if phone belongs to an admin first
-    const { data: admin, error: adminError } = await supabaseAdmin
-      .from("admin_users")
-      .select("id, password_hash")
-      .eq("phone", data.phone)
-      .maybeSingle();
-
-    if (!adminError && admin) {
-      // It's an admin account - verify password and use admin login server function
-      const ok = await bcrypt.compare(data.password, admin.password_hash);
-      if (!ok) throw new Error("Invalid phone or password");
-
-      // Set admin session cookie inline here
-      const { setCookie } = await import("@tanstack/react-start/server");
-      const { signAdminJwt } = await import("@/lib/admin-jwt.server");
-      
-      // Update last_login
-      await supabaseAdmin
-        .from("admin_users")
-        .update({ last_login: new Date().toISOString() })
-        .eq("id", admin.id);
-
-      // Create JWT and set cookie
-      const token = await signAdminJwt({ admin_id: admin.id, email: "" });
-      setCookie("dukapos_admin_session", token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        path: "/",
-        maxAge: 60 * 60 * 8, // 8 hours
-      });
-      
-      return {
-        shop_id: admin.id,
-        is_admin: true,
-        needs_onboarding: false,
-      };
-    }
-
-    // Not an admin - check if it's a merchant
+    // Check if it's a merchant
     const { data: shop, error } = await supabaseAdmin
       .from("shops")
       .select("id, phone, password_hash, payment_channel_id, payment_api_key")

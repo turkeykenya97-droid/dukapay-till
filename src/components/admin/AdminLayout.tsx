@@ -1,9 +1,5 @@
 import { useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { adminLogoutServer } from "@/lib/admin-auth.server";
 import { Button } from "@/components/ui/button";
 import {
   BarChart3,
@@ -12,7 +8,6 @@ import {
   Zap,
   ClipboardList,
   Settings,
-  LogOut,
   Menu,
   X,
   Home,
@@ -24,27 +19,11 @@ import {
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  adminEmail?: string;
-  adminName?: string;
 }
 
-export function AdminLayout({ children, adminEmail, adminName }: AdminLayoutProps) {
+export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const logout = useServerFn(adminLogoutServer);
-
-  const logoutMutation = useMutation({
-    mutationFn: () => logout({}),
-    onSuccess: () => {
-      toast.success("Logged out successfully");
-      // Redirect will be handled by router
-      window.location.href = "/admin/login";
-    },
-    onError: (e) => {
-      console.error("Logout error:", e);
-      toast.error("Failed to logout");
-    },
-  });
 
   const navItems = [
     { label: "Dashboard", href: "/admin/dashboard", icon: Home },
@@ -108,26 +87,6 @@ export function AdminLayout({ children, adminEmail, adminName }: AdminLayoutProp
               );
             })}
           </nav>
-
-          {/* User Info & Logout */}
-          <div className="p-4 border-t border-slate-200 space-y-3">
-            {(adminEmail || adminName) && (
-              <div className="text-sm">
-                <p className="text-slate-600 text-xs">Logged in as</p>
-                <p className="text-slate-900 font-medium truncate">{adminName || adminEmail}</p>
-              </div>
-            )}
-            <Button
-              onClick={() => logoutMutation.mutate()}
-              disabled={logoutMutation.isPending}
-              variant="outline"
-              size="sm"
-              className="w-full justify-start"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              {logoutMutation.isPending ? "Logging out…" : "Logout"}
-            </Button>
-          </div>
         </div>
       </aside>
 

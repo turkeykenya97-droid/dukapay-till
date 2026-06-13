@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -16,19 +16,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getAdminSessionServer } from "@/lib/admin-auth.server";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { format } from "date-fns";
 import { Search, Download } from "lucide-react";
 
 export const Route = createFileRoute("/admin/merchants")({
-  beforeLoad: async () => {
-    const session = await getAdminSessionServer();
-    if (!session) throw new Error("Not authenticated");
-    return { session };
-  },
-  errorComponent: () => <Navigate to="/admin/login" />,
   component: MerchantsPage,
 });
 

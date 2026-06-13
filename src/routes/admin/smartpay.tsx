@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -15,18 +15,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getAdminSessionServer } from "@/lib/admin-auth.server";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { AlertTriangle, ExternalLink, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/admin/smartpay")({
-  beforeLoad: async () => {
-    const session = await getAdminSessionServer();
-    if (!session) throw new Error("Not authenticated");
-    return { session };
-  },
-  errorComponent: () => <Navigate to="/admin/login" />,
   component: SmartPayPage,
 });
 

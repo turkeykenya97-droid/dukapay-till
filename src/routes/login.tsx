@@ -96,7 +96,7 @@ function LoginPage() {
     if (clickCount.current >= 3) {
       clearTimeout(clickTimer.current);
       clickCount.current = 0;
-      navigate({ to: "/admin/login" });
+      navigate({ to: "/admin/dashboard" });
     }
   };
 

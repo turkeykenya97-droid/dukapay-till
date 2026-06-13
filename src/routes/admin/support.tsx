@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -14,19 +14,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getAdminSessionServer } from "@/lib/admin-auth.server";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { differenceInDays } from "date-fns";
 import { Phone, MessageSquare, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/admin/support")({
-  beforeLoad: async () => {
-    const session = await getAdminSessionServer();
-    if (!session) throw new Error("Not authenticated");
-    return { session };
-  },
-  errorComponent: () => <Navigate to="/admin/login" />,
   component: SupportPage,
 });
 

@@ -23,7 +23,6 @@ import { Route as AdminRevenueRouteImport } from './routes/admin/revenue'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminMerchantsRouteImport } from './routes/admin/merchants'
 import { Route as AdminLogsRouteImport } from './routes/admin/logs'
-import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
@@ -105,11 +104,6 @@ const AdminLogsRoute = AdminLogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -183,7 +177,6 @@ export interface FileRoutesByFullPath {
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/login': typeof AdminLoginRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -210,7 +203,6 @@ export interface FileRoutesByTo {
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/login': typeof AdminLoginRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -239,7 +231,6 @@ export interface FileRoutesById {
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/login': typeof AdminLoginRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -268,7 +259,6 @@ export interface FileRouteTypes {
     | '/subscription'
     | '/admin/analytics'
     | '/admin/dashboard'
-    | '/admin/login'
     | '/admin/logs'
     | '/admin/merchants'
     | '/admin/notifications'
@@ -295,7 +285,6 @@ export interface FileRouteTypes {
     | '/subscription'
     | '/admin/analytics'
     | '/admin/dashboard'
-    | '/admin/login'
     | '/admin/logs'
     | '/admin/merchants'
     | '/admin/notifications'
@@ -323,7 +312,6 @@ export interface FileRouteTypes {
     | '/_authenticated/subscription'
     | '/admin/analytics'
     | '/admin/dashboard'
-    | '/admin/login'
     | '/admin/logs'
     | '/admin/merchants'
     | '/admin/notifications'
@@ -446,13 +434,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLogsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/login': {
-      id: '/admin/login'
-      path: '/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/dashboard'
@@ -562,7 +543,6 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
-  AdminLoginRoute: typeof AdminLoginRoute
   AdminLogsRoute: typeof AdminLogsRoute
   AdminMerchantsRoute: typeof AdminMerchantsRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
@@ -576,7 +556,6 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminDashboardRoute: AdminDashboardRoute,
-  AdminLoginRoute: AdminLoginRoute,
   AdminLogsRoute: AdminLogsRoute,
   AdminMerchantsRoute: AdminMerchantsRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,

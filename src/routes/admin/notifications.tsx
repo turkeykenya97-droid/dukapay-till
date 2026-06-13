@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -11,18 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { getAdminSessionServer } from "@/lib/admin-auth.server";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { Bell, Mail, Phone, Send } from "lucide-react";
 
 export const Route = createFileRoute("/admin/notifications")({
-  beforeLoad: async () => {
-    const session = await getAdminSessionServer();
-    if (!session) throw new Error("Not authenticated");
-    return { session };
-  },
-  errorComponent: () => <Navigate to="/admin/login" />,
   component: NotificationsPage,
 });
 
