@@ -14,16 +14,19 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ReceiptSale_idRouteImport } from './routes/receipt.$sale_id'
 import { Route as PayShopIdRouteImport } from './routes/pay/$shopId'
 import { Route as AdminTransactionsRouteImport } from './routes/admin/transactions'
 import { Route as AdminSystemRouteImport } from './routes/admin/system'
 import { Route as AdminSupportRouteImport } from './routes/admin/support'
 import { Route as AdminSmartpayRouteImport } from './routes/admin/smartpay'
 import { Route as AdminRevenueRouteImport } from './routes/admin/revenue'
+import { Route as AdminReceiptSettingsRouteImport } from './routes/admin/receipt-settings'
 import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
 import { Route as AdminMerchantsRouteImport } from './routes/admin/merchants'
 import { Route as AdminLogsRouteImport } from './routes/admin/logs'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminBarcodesRouteImport } from './routes/admin/barcodes'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedSellRouteImport } from './routes/_authenticated/sell'
@@ -59,6 +62,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReceiptSale_idRoute = ReceiptSale_idRouteImport.update({
+  id: '/receipt/$sale_id',
+  path: '/receipt/$sale_id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PayShopIdRoute = PayShopIdRouteImport.update({
   id: '/pay/$shopId',
   path: '/pay/$shopId',
@@ -89,6 +97,11 @@ const AdminRevenueRoute = AdminRevenueRouteImport.update({
   path: '/revenue',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminReceiptSettingsRoute = AdminReceiptSettingsRouteImport.update({
+  id: '/receipt-settings',
+  path: '/receipt-settings',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -107,6 +120,11 @@ const AdminLogsRoute = AdminLogsRouteImport.update({
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBarcodesRoute = AdminBarcodesRouteImport.update({
+  id: '/barcodes',
+  path: '/barcodes',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
@@ -176,16 +194,19 @@ export interface FileRoutesByFullPath {
   '/sell': typeof AuthenticatedSellRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/barcodes': typeof AdminBarcodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/receipt-settings': typeof AdminReceiptSettingsRoute
   '/admin/revenue': typeof AdminRevenueRoute
   '/admin/smartpay': typeof AdminSmartpayRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/pay/$shopId': typeof PayShopIdRoute
+  '/receipt/$sale_id': typeof ReceiptSale_idRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRoutesByTo {
@@ -202,16 +223,19 @@ export interface FileRoutesByTo {
   '/sell': typeof AuthenticatedSellRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/barcodes': typeof AdminBarcodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/receipt-settings': typeof AdminReceiptSettingsRoute
   '/admin/revenue': typeof AdminRevenueRoute
   '/admin/smartpay': typeof AdminSmartpayRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/pay/$shopId': typeof PayShopIdRoute
+  '/receipt/$sale_id': typeof ReceiptSale_idRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRoutesById {
@@ -230,16 +254,19 @@ export interface FileRoutesById {
   '/_authenticated/sell': typeof AuthenticatedSellRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/barcodes': typeof AdminBarcodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/receipt-settings': typeof AdminReceiptSettingsRoute
   '/admin/revenue': typeof AdminRevenueRoute
   '/admin/smartpay': typeof AdminSmartpayRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/pay/$shopId': typeof PayShopIdRoute
+  '/receipt/$sale_id': typeof ReceiptSale_idRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRouteTypes {
@@ -258,16 +285,19 @@ export interface FileRouteTypes {
     | '/sell'
     | '/subscription'
     | '/admin/analytics'
+    | '/admin/barcodes'
     | '/admin/dashboard'
     | '/admin/logs'
     | '/admin/merchants'
     | '/admin/notifications'
+    | '/admin/receipt-settings'
     | '/admin/revenue'
     | '/admin/smartpay'
     | '/admin/support'
     | '/admin/system'
     | '/admin/transactions'
     | '/pay/$shopId'
+    | '/receipt/$sale_id'
     | '/api/public/webhooks/smartpay'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -284,16 +314,19 @@ export interface FileRouteTypes {
     | '/sell'
     | '/subscription'
     | '/admin/analytics'
+    | '/admin/barcodes'
     | '/admin/dashboard'
     | '/admin/logs'
     | '/admin/merchants'
     | '/admin/notifications'
+    | '/admin/receipt-settings'
     | '/admin/revenue'
     | '/admin/smartpay'
     | '/admin/support'
     | '/admin/system'
     | '/admin/transactions'
     | '/pay/$shopId'
+    | '/receipt/$sale_id'
     | '/api/public/webhooks/smartpay'
   id:
     | '__root__'
@@ -311,16 +344,19 @@ export interface FileRouteTypes {
     | '/_authenticated/sell'
     | '/_authenticated/subscription'
     | '/admin/analytics'
+    | '/admin/barcodes'
     | '/admin/dashboard'
     | '/admin/logs'
     | '/admin/merchants'
     | '/admin/notifications'
+    | '/admin/receipt-settings'
     | '/admin/revenue'
     | '/admin/smartpay'
     | '/admin/support'
     | '/admin/system'
     | '/admin/transactions'
     | '/pay/$shopId'
+    | '/receipt/$sale_id'
     | '/api/public/webhooks/smartpay'
   fileRoutesById: FileRoutesById
 }
@@ -331,6 +367,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   PayShopIdRoute: typeof PayShopIdRoute
+  ReceiptSale_idRoute: typeof ReceiptSale_idRoute
   ApiPublicWebhooksSmartpayRoute: typeof ApiPublicWebhooksSmartpayRoute
 }
 
@@ -369,6 +406,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/receipt/$sale_id': {
+      id: '/receipt/$sale_id'
+      path: '/receipt/$sale_id'
+      fullPath: '/receipt/$sale_id'
+      preLoaderRoute: typeof ReceiptSale_idRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pay/$shopId': {
@@ -413,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRevenueRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/receipt-settings': {
+      id: '/admin/receipt-settings'
+      path: '/receipt-settings'
+      fullPath: '/admin/receipt-settings'
+      preLoaderRoute: typeof AdminReceiptSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/notifications': {
       id: '/admin/notifications'
       path: '/notifications'
@@ -439,6 +490,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/barcodes': {
+      id: '/admin/barcodes'
+      path: '/barcodes'
+      fullPath: '/admin/barcodes'
+      preLoaderRoute: typeof AdminBarcodesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/analytics': {
@@ -542,10 +600,12 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminBarcodesRoute: typeof AdminBarcodesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminLogsRoute: typeof AdminLogsRoute
   AdminMerchantsRoute: typeof AdminMerchantsRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
+  AdminReceiptSettingsRoute: typeof AdminReceiptSettingsRoute
   AdminRevenueRoute: typeof AdminRevenueRoute
   AdminSmartpayRoute: typeof AdminSmartpayRoute
   AdminSupportRoute: typeof AdminSupportRoute
@@ -555,10 +615,12 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminBarcodesRoute: AdminBarcodesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminLogsRoute: AdminLogsRoute,
   AdminMerchantsRoute: AdminMerchantsRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
+  AdminReceiptSettingsRoute: AdminReceiptSettingsRoute,
   AdminRevenueRoute: AdminRevenueRoute,
   AdminSmartpayRoute: AdminSmartpayRoute,
   AdminSupportRoute: AdminSupportRoute,
@@ -575,6 +637,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   PayShopIdRoute: PayShopIdRoute,
+  ReceiptSale_idRoute: ReceiptSale_idRoute,
   ApiPublicWebhooksSmartpayRoute: ApiPublicWebhooksSmartpayRoute,
 }
 export const routeTree = rootRouteImport

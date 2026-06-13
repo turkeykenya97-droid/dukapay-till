@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { listProducts } from "@/lib/products.functions";
 import { createSale, getSaleStatus, cancelSale } from "@/lib/sales.functions";
 import { verifyPin, getCurrentShop } from "@/lib/auth.functions";
+import { getReceiptTemplate, storeReceiptData, getProductByBarcode } from "@/lib/receipt.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Receipt } from "@/components/Receipt";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 import {
   Minus,
   Plus,
@@ -39,6 +42,7 @@ import {
   Calculator as CalculatorIcon,
   X,
   AlertTriangle,
+  ScanLine,
 } from "lucide-react";
 import { fmtKsh } from "@/lib/format";
 
@@ -63,9 +67,11 @@ type CartItem = {
   unit_price: number;
   quantity: number;
   stock?: number;
+  barcode?: string;
+  barcode_type?: string;
 };
 
-type Tab = "inventory" | "quick" | "calc";
+type Tab = "inventory" | "camera" | "quick" | "calc";
 
 function SellPage() {
   const navigate = useNavigate();
@@ -76,12 +82,14 @@ function SellPage() {
   const getStatus = useServerFn(getSaleStatus);
   const cancel = useServerFn(cancelSale);
   const shopFn = useServerFn(getCurrentShop);
+  const lookupBarcode = useServerFn(getProductByBarcode);
 
   const [tab, setTab] = useState<Tab>("inventory");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [phone, setPhone] = useState("");
   const [search, setSearch] = useState("");
   const [cashOpen, setCashOpen] = useState(false);
+  const [barcodeLookupLoading, setBarcodeLookupLoading] = useState(false);
   const [cashPaid, setCashPaid] = useState("");
   const [pinOpen, setPinOpen] = useState(false);
   const [phoneOpen, setPhoneOpen] = useState(false);
@@ -90,6 +98,7 @@ function SellPage() {
   const [pendingSaleId, setPendingSaleId] = useState<string | null>(null);
   const [finalStatus, setFinalStatus] = useState<"completed" | "failed" | null>(null);
   const [paymentTimeout, setPaymentTimeout] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   useEffect(() => {
     shopFn({ data: undefined }).then((shop) => {
@@ -162,7 +171,7 @@ function SellPage() {
     return products.filter((p) => p.name.toLowerCase().includes(q));
   }, [products, search]);
 
-  const addInventoryItem = (p: { id: string; name: string; price: number; stock: number }) => {
+  const addInventoryItem = (p: { id: string; name: string; price: number; stock: number; barcode?: string; barcode_type?: string }) => {
     setCart((c) => {
       const existing = c.find((i) => i.product_id === p.id);
       if (existing) {
@@ -187,6 +196,8 @@ function SellPage() {
           unit_price: Number(p.price),
           stock: p.stock,
           quantity: 1,
+          barcode: p.barcode,
+          barcode_type: p.barcode_type,
         },
       ];
     });
@@ -223,6 +234,24 @@ function SellPage() {
   };
 
   const removeItem = (key: string) => setCart((c) => c.filter((i) => i.key !== key));
+
+  const handleBarcodeScan = async (barcode: string) => {
+    if (barcodeLookupLoading) return;
+    setBarcodeLookupLoading(true);
+    try {
+      const product = await lookupBarcode({ data: { barcode } });
+      if (product) {
+        addInventoryItem(product as any);
+        toast.success(`Added: ${product.name}`);
+      } else {
+        toast.error("Product not found");
+      }
+    } catch (err) {
+      toast.error((err as Error).message || "Barcode lookup failed");
+    } finally {
+      setBarcodeLookupLoading(false);
+    }
+  };
 
   const submitPin = async () => {
     try {
@@ -291,18 +320,45 @@ function SellPage() {
 
   if (finalStatus === "completed") {
     return (
-      <ResultScreen
-        ok
-        total={total}
-        cashPaid={cashNum}
-        mpesaAmount={mpesaAmount}
-        onDone={() => {
-          resetSale();
-          navigate({ to: "/dashboard" });
-        }}
-        items={cart}
-        phone={phone}
-      />
+      <>
+        <ResultScreen
+          ok
+          total={total}
+          cashPaid={cashNum}
+          mpesaAmount={mpesaAmount}
+          onDone={() => {
+            setShowReceipt(false);
+            resetSale();
+            navigate({ to: "/dashboard" });
+          }}
+          items={cart}
+          phone={phone}
+          onShowReceipt={() => setShowReceipt(true)}
+          sale_id={pendingSaleId!}
+        />
+        {showReceipt && pendingSaleId && saleStatus && (
+          <Receipt
+            sale_id={pendingSaleId}
+            shop_name={saleStatus.shop?.shop_name || "Shop"}
+            phone={saleStatus.shop?.phone}
+            total={total}
+            cash_paid={cashNum}
+            mpesa_amount={mpesaAmount}
+            items={cart.map((i) => ({
+              product_name: i.name,
+              quantity: i.quantity,
+              unit_price: i.unit_price,
+              line_total: i.unit_price * i.quantity,
+              barcode: i.barcode,
+              barcode_type: i.barcode_type,
+            }))}
+            customer_phone={phone}
+            sold_at={saleStatus.created_at || new Date().toISOString()}
+            payment_status={saleStatus.payment_status}
+            onClose={() => setShowReceipt(false)}
+          />
+        )}
+      </>
     );
   }
   if (finalStatus === "failed") {
@@ -359,6 +415,7 @@ function SellPage() {
 
   const tabs: { id: Tab; label: string; icon: typeof Package }[] = [
     { id: "inventory", label: "Inventory", icon: Package },
+    { id: "camera", label: "Scan", icon: ScanLine },
     { id: "quick", label: "Quick", icon: Zap },
     { id: "calc", label: "Calc", icon: CalculatorIcon },
   ];
@@ -401,6 +458,13 @@ function SellPage() {
               search={search}
               setSearch={setSearch}
               onAdd={addInventoryItem}
+            />
+          )}
+          {tab === "camera" && (
+            <BarcodeScanner
+              onBarcodeDetected={handleBarcodeScan}
+              onManualEntry={handleBarcodeScan}
+              isLoading={barcodeLookupLoading}
             />
           )}
           {tab === "quick" && <QuickPane onAdd={addManualItem} />}
@@ -1063,6 +1127,8 @@ function ResultScreen({
   phone,
   onDone,
   onCancel,
+  onShowReceipt,
+  sale_id,
 }: {
   ok: boolean;
   total: number;
@@ -1072,6 +1138,8 @@ function ResultScreen({
   phone: string;
   onDone: () => void;
   onCancel?: () => void;
+  onShowReceipt?: () => void;
+  sale_id?: string;
 }) {
   return (
     <div className="max-w-md mx-auto px-4 pt-10 text-center relative">
@@ -1116,6 +1184,11 @@ function ResultScreen({
         )}
       </div>
       <div className="space-y-2">
+        {ok && onShowReceipt && (
+          <Button variant="outline" className="w-full" onClick={onShowReceipt}>
+            View Receipt
+          </Button>
+        )}
         <Button className="w-full" onClick={onDone}>
           {ok ? "Done" : "Try again"}
         </Button>
