@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { initiatePublicPayment, getPublicShopInfo } from "@/lib/public-payment.functions";
+import { parseServerError, validators } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,6 +54,7 @@ function PublicPaymentPage() {
 
   const [amount, setAmount] = useState("");
   const [phone, setPhone] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [paymentState, setPaymentState] = useState<"form" | "success" | "error">("form");
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -64,7 +66,8 @@ function PublicPaymentPage() {
         const shopData = await loadShopInfo({ data: { shop_id: shopId } });
         setShop(shopData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load shop");
+        const message = parseServerError(err instanceof Error ? err : new Error(String(err)));
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -73,9 +76,40 @@ function PublicPaymentPage() {
     loadShop();
   }, [shopId, loadShopInfo]);
 
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    const amountError = validators.amount.validate(amount, 300000);
+    if (amountError) newErrors.amount = amountError.message;
+
+    const phoneError = validators.phone.validate(phone);
+    if (phoneError) newErrors.phone = phoneError.message;
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleAmountBlur = () => {
+    const error = validators.amount.validate(amount, 300000);
+    if (error) {
+      setErrors((e) => ({ ...e, amount: error.message }));
+    } else {
+      setErrors((e) => ({ ...e, amount: "" }));
+    }
+  };
+
+  const handlePhoneBlur = () => {
+    const error = validators.phone.validate(phone);
+    if (error) {
+      setErrors((e) => ({ ...e, phone: error.message }));
+    } else {
+      setErrors((e) => ({ ...e, phone: "" }));
+    }
+  };
+
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!shop || !amount || !phone) return;
+    if (!shop || !validateForm()) return;
 
     setSubmitting(true);
     setPaymentError(null);
@@ -90,7 +124,8 @@ function PublicPaymentPage() {
       });
       setPaymentState("success");
     } catch (err) {
-      setPaymentError(err instanceof Error ? err.message : "Payment failed");
+      const message = parseServerError(err instanceof Error ? err : new Error(String(err)));
+      setPaymentError(message);
       setPaymentState("error");
     } finally {
       setSubmitting(false);
@@ -185,8 +220,9 @@ function PublicPaymentPage() {
         <form onSubmit={handlePayment} className="bg-white rounded-lg shadow-lg p-8 space-y-6 mb-6">
           {/* Amount Input */}
           <div className="space-y-2">
-            <Label htmlFor="amount" className="text-slate-700 font-medium">
+            <Label htmlFor="amount" className={`text-slate-700 font-medium ${errors.amount ? "text-red-600" : ""}`}>
               Amount (KES)
+              {errors.amount && <span className="text-red-600">*</span>}
             </Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">KES</span>
@@ -198,18 +234,30 @@ function PublicPaymentPage() {
                 max="300000"
                 placeholder="0"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="pl-12 h-12 text-lg"
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  if (errors.amount) setErrors((e) => ({ ...e, amount: "" }));
+                }}
+                onBlur={handleAmountBlur}
+                className={`pl-12 h-12 text-lg ${errors.amount ? "border-red-600 focus-visible:ring-red-600" : ""}`}
                 required
               />
             </div>
-            <p className="text-xs text-slate-500">Minimum KES 1, Maximum KES 300,000</p>
+            {errors.amount ? (
+              <div className="flex items-center gap-2 text-sm text-red-600">
+                <AlertCircle className="h-4 w-4" />
+                {errors.amount}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500">Minimum KES 1, Maximum KES 300,000</p>
+            )}
           </div>
 
           {/* Phone Input */}
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-slate-700 font-medium">
+            <Label htmlFor="phone" className={`text-slate-700 font-medium ${errors.phone ? "text-red-600" : ""}`}>
               Phone Number
+              {errors.phone && <span className="text-red-600">*</span>}
             </Label>
             <Input
               id="phone"
@@ -217,11 +265,23 @@ function PublicPaymentPage() {
               inputMode="tel"
               placeholder="07XX XXX XXX"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="h-12 text-lg"
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                setPhone(val);
+                if (errors.phone) setErrors((e) => ({ ...e, phone: "" }));
+              }}
+              onBlur={handlePhoneBlur}
+              className={`h-12 text-lg ${errors.phone ? "border-red-600 focus-visible:ring-red-600" : ""}`}
               required
             />
-            <p className="text-xs text-slate-500">Kenyan number format required</p>
+            {errors.phone ? (
+              <div className="flex items-center gap-2 text-sm text-red-600">
+                <AlertCircle className="h-4 w-4" />
+                {errors.phone}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500">Kenyan number format required</p>
+            )}
           </div>
 
           {/* Submit Button */}
@@ -233,7 +293,7 @@ function PublicPaymentPage() {
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Sending...
+                Sending payment...
               </>
             ) : (
               "Pay Now"

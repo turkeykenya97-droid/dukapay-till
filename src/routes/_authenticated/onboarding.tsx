@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { onboardTill } from "@/lib/auth.functions";
+import { parseServerError, validators } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Smartphone } from "lucide-react";
+import { Smartphone, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: OnboardingPage,
@@ -26,6 +27,7 @@ function OnboardingPage() {
   const [channelType, setChannelType] = useState<"till" | "paybill" | "bank">("till");
   const [shortCode, setShortCode] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -40,8 +42,49 @@ function OnboardingPage() {
       toast.success("Till verified! Welcome to Trusit.");
       navigate({ to: "/dashboard" });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      const message = parseServerError(e);
+      toast.error(message);
+    },
   });
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    const shortCodeError = validators.tillNumber.validate(shortCode);
+    if (shortCodeError) newErrors.shortCode = shortCodeError.message;
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    mutation.mutate();
+  };
+
+  const handleShortCodeBlur = () => {
+    const error = validators.tillNumber.validate(shortCode);
+    if (error) {
+      setErrors((e) => ({ ...e, shortCode: error.message }));
+    } else {
+      setErrors((e) => ({ ...e, shortCode: "" }));
+    }
+  };
+
+  const hasShortCodeError = !!errors.shortCode;
+
+  const getLabel = () => {
+    switch (channelType) {
+      case "paybill":
+        return "Paybill number";
+      case "bank":
+        return "Bank short code";
+      default:
+        return "Till number";
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-10">
@@ -56,13 +99,7 @@ function OnboardingPage() {
           </p>
         </div>
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              mutation.mutate();
-            }}
-            className="space-y-4"
-          >
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>Payment type</Label>
               <Select
@@ -79,31 +116,51 @@ function OnboardingPage() {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="short">
-                {channelType === "paybill" ? "Paybill number" : channelType === "bank" ? "Bank short code" : "Till number"}
+              <Label htmlFor="short" className={hasShortCodeError ? "text-red-600" : ""}>
+                {getLabel()}
+                {hasShortCodeError && <span className="text-red-600">*</span>}
               </Label>
               <Input
                 id="short"
                 inputMode="numeric"
                 value={shortCode}
-                onChange={(e) => setShortCode(e.target.value.replace(/\D/g, ""))}
+                onChange={(e) => {
+                  setShortCode(e.target.value.replace(/\D/g, ""));
+                  if (errors.shortCode) setErrors((e) => ({ ...e, shortCode: "" }));
+                }}
+                onBlur={handleShortCodeBlur}
                 placeholder="123456"
+                className={hasShortCodeError ? "border-red-600 focus-visible:ring-red-600" : ""}
                 required
               />
+              {hasShortCodeError && (
+                <div className="flex items-center gap-2 text-sm text-red-600">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.shortCode}
+                </div>
+              )}
             </div>
+
             {(channelType === "paybill" || channelType === "bank") && (
               <div className="space-y-2">
-                <Label htmlFor="acct">Account number</Label>
+                <Label htmlFor="acct">Account number (optional)</Label>
                 <Input
                   id="acct"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  placeholder="Optional"
+                  placeholder="Leave blank if not needed"
                 />
               </div>
             )}
-            <Button type="submit" className="w-full" size="lg" disabled={mutation.isPending}>
+
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={mutation.isPending}
+            >
               {mutation.isPending ? "Verifying…" : "Verify & Continue"}
             </Button>
           </form>

@@ -4,10 +4,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { loginShop } from "@/lib/auth.functions";
+import { parseServerError, validators } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Store } from "lucide-react";
+import { Store, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -24,14 +25,13 @@ function LoginPage() {
   const login = useServerFn(loginShop);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const mutation = useMutation({
     mutationFn: () => {
-      console.log("[login] Attempting to login with phone:", phone);
       return login({ data: { phone, password } });
     },
     onSuccess: (data) => {
-      console.log("[login] Success:", data);
       toast.success("Welcome back!");
       if (data.is_admin) {
         navigate({ to: "/admin/dashboard" });
@@ -40,32 +40,46 @@ function LoginPage() {
       }
     },
     onError: (e: Error) => {
-      console.error("[login error]", e);
-      let message = e.message || "Login failed. Please try again.";
-      // Parse validation errors
-      try {
-        if (message.includes("Phone must be 10 digits")) {
-          message = "Phone must be 10 digits starting with 0 (e.g., 0712345678)";
-        } else if (message.includes("Invalid phone")) {
-          message = "Invalid phone number or password";
-        }
-      } catch {}
+      const message = parseServerError(e);
       toast.error(message);
     },
   });
 
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    const phoneError = validators.phone.validate(phone);
+    if (phoneError) newErrors.phone = phoneError.message;
+
+    const passwordError = validators.password.validate(password);
+    if (passwordError) newErrors.password = passwordError.message;
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[login] Form submitted");
-    if (!phone || !password) {
-      toast.error("Please enter phone and password");
-      return;
-    }
-    if (!/^0\d{9}$/.test(phone)) {
-      toast.error("Phone must be 10 digits starting with 0 (e.g., 0712345678)");
-      return;
-    }
+    if (!validateForm()) return;
     mutation.mutate();
+  };
+
+  const handlePhoneBlur = () => {
+    const error = validators.phone.validate(phone);
+    if (error) {
+      setErrors((e) => ({ ...e, phone: error.message }));
+    } else {
+      setErrors((e) => ({ ...e, phone: "" }));
+    }
+  };
+
+  const handlePasswordBlur = () => {
+    const error = validators.password.validate(password);
+    if (error) {
+      setErrors((e) => ({ ...e, password: error.message }));
+    } else {
+      setErrors((e) => ({ ...e, password: "" }));
+    }
   };
 
   return (
@@ -79,12 +93,12 @@ function LoginPage() {
           <p className="text-sm text-muted-foreground">Sign in to your duka</p>
         </div>
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4"
-          >
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone number</Label>
+              <Label htmlFor="phone" className={errors.phone ? "text-red-600" : ""}>
+                Phone number
+                {errors.phone && <span className="text-red-600">*</span>}
+              </Label>
               <Input
                 id="phone"
                 inputMode="tel"
@@ -93,23 +107,47 @@ function LoginPage() {
                 onChange={(e) => {
                   const val = e.target.value.replace(/\D/g, "").slice(0, 10);
                   setPhone(val);
+                  if (errors.phone) setErrors((e) => ({ ...e, phone: "" }));
                 }}
+                onBlur={handlePhoneBlur}
                 maxLength={10}
+                className={errors.phone ? "border-red-600 focus-visible:ring-red-600" : ""}
                 required
               />
-              <p className="text-xs text-muted-foreground">Enter 10-digit phone starting with 0</p>
+              {errors.phone && (
+                <div className="flex items-center gap-2 text-sm text-red-600">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.phone}
+                </div>
+              )}
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className={errors.password ? "text-red-600" : ""}>
+                Password
+                {errors.password && <span className="text-red-600">*</span>}
+              </Label>
               <Input
                 id="password"
                 type="password"
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors((e) => ({ ...e, password: "" }));
+                }}
+                onBlur={handlePasswordBlur}
+                className={errors.password ? "border-red-600 focus-visible:ring-red-600" : ""}
                 required
               />
+              {errors.password && (
+                <div className="flex items-center gap-2 text-sm text-red-600">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.password}
+                </div>
+              )}
             </div>
+
             <Button
               type="submit"
               className="w-full"
@@ -119,6 +157,7 @@ function LoginPage() {
               {mutation.isPending ? "Signing in…" : "Sign in"}
             </Button>
           </form>
+
           <p className="mt-4 text-sm text-center text-muted-foreground">
             New to Trusit?{" "}
             <Link to="/register" className="text-primary font-medium hover:underline">
