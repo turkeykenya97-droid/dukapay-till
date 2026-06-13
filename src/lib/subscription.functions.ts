@@ -56,7 +56,7 @@ export const initiateRenewal = createServerFn({ method: "POST" })
     // Store CheckoutRequestID in payment_reference for webhook reconciliation.
     await supabaseAdmin
       .from("subscription_payments")
-      .update({ payment_reference: `${reference}|${stk.checkout_request_id}` })
+      .update({ payment_reference: `SUB-CRID-${stk.checkout_request_id}` })
       .eq("id", payment.id);
   } catch (e) {
     await supabaseAdmin

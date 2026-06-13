@@ -27,7 +27,7 @@ function DashboardPage() {
   const renew = useServerFn(initiateRenewal);
 
   const renewMutation = useMutation({
-    mutationFn: () => renew({ data: undefined }),
+    mutationFn: () => renew({ data: { plan: "pro" } }),
     onSuccess: () => {
       toast.success("M-Pesa prompt sent. Approve on your phone.");
       qc.invalidateQueries({ queryKey: ["dashboard"] });

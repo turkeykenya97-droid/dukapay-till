@@ -119,6 +119,7 @@ export const createSale = createServerFn({ method: "POST" })
         mpesa_amount: mpesaAmount,
         customer_phone: data.customer_phone,
         payment_status: "pending",
+        payment_method: "mpesa",
       })
       .select("id")
       .single();

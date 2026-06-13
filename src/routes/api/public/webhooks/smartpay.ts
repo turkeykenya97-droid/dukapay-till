@@ -161,7 +161,8 @@ export const Route = createFileRoute("/api/public/webhooks/smartpay")({
                   subscription_expiry: newExpiry,
                   subscription_status: "active",
                   ...(plan && { plan: plan }),
-                  trial_start: "",
+                  transaction_count: 0,
+                  transaction_reset_date: new Date().toISOString(),
                 } as any)
                 .eq("id", subPayment.shop_id) as any);
             } else {
