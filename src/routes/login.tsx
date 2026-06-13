@@ -12,8 +12,8 @@ import { Store } from "lucide-react";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Log in — DukaPOS" },
-      { name: "description", content: "Log in to your DukaPOS account." },
+      { title: "Log in — Trusit" },
+      { name: "description", content: "Log in to your Trusit account." },
     ],
   }),
   component: LoginPage,

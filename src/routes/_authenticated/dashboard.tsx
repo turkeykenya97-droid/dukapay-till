@@ -15,7 +15,7 @@ const dashboardQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — DukaPOS" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Trusit" }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(dashboardQuery),
   component: DashboardPage,
 });

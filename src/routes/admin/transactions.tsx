@@ -113,7 +113,7 @@ function TransactionsPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Transactions</h1>
-          <p className="text-slate-600 mt-2">All M-Pesa payments processed through DukaPOS</p>
+          <p className="text-slate-600 mt-2">All M-Pesa payments processed through Trusit</p>
         </div>
 
         {/* Metrics */}

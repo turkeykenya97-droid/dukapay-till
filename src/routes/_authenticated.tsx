@@ -78,7 +78,7 @@ function AuthenticatedLayout() {
             {initials || "DP"}
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-bold text-foreground leading-tight">DukaPOS</div>
+            <div className="text-sm font-bold text-foreground leading-tight">Trusit</div>
             <div className="text-xs text-muted-foreground truncate">{shop.shop_name}</div>
           </div>
         </div>

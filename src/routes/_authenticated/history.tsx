@@ -8,7 +8,7 @@ import { fmtKsh, fmtDate } from "@/lib/format";
 import { Receipt, ChevronDown, ChevronUp } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/history")({
-  head: () => ({ meta: [{ title: "Sales history — DukaPOS" }] }),
+  head: () => ({ meta: [{ title: "Sales history — Trusit" }] }),
   component: HistoryPage,
 });
 

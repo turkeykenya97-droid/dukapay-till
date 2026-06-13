@@ -30,7 +30,7 @@ const analyticsQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/_authenticated/analytics")({
-  head: () => ({ meta: [{ title: "Analytics — DukaPOS" }] }),
+  head: () => ({ meta: [{ title: "Analytics — Trusit" }] }),
   errorComponent: ({ error }) => {
     const isUpgradeRequired = error instanceof Error && error.message === "UPGRADE_REQUIRED";
     const navigate = useNavigate();

@@ -12,8 +12,8 @@ import { Store } from "lucide-react";
 export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
-      { title: "Create your DukaPOS account" },
-      { name: "description", content: "Start your 14-day free trial of DukaPOS." },
+      { title: "Create your Trusit account" },
+      { name: "description", content: "Start your 14-day free trial of Trusit." },
     ],
   }),
   component: RegisterPage,

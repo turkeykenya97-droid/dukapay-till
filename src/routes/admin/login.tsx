@@ -12,8 +12,8 @@ import { Lock } from "lucide-react";
 export const Route = createFileRoute("/admin/login")({
   head: () => ({
     meta: [
-      { title: "Admin Login — DukaPOS" },
-      { name: "description", content: "Admin portal login for DukaPOS." },
+      { title: "Admin Login — Trusit" },
+      { name: "description", content: "Admin portal login for Trusit." },
     ],
   }),
   component: AdminLoginPage,
@@ -59,7 +59,7 @@ function AdminLoginPage() {
           <div className="h-14 w-14 rounded-2xl bg-green-600 text-white flex items-center justify-center shadow-md">
             <Lock className="h-7 w-7" />
           </div>
-          <h1 className="mt-4 text-2xl font-bold text-foreground">DukaPOS</h1>
+          <h1 className="mt-4 text-2xl font-bold text-foreground">Trusit</h1>
           <p className="text-sm text-muted-foreground">Admin Portal</p>
         </div>
         <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
@@ -72,7 +72,7 @@ function AdminLoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@dukapos.com"
+                placeholder="admin@trusit.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

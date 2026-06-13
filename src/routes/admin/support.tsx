@@ -126,7 +126,7 @@ function SupportPage() {
 
   const openWhatsApp = (phone: string, ownerName: string) => {
     const message = encodeURIComponent(
-      `Hi ${ownerName}, this is DukaPOS support. We noticed you might need assistance with your account. Can we help you get set up?`
+      `Hi ${ownerName}, this is Trusit support. We noticed you might need assistance with your account. Can we help you get set up?`
     );
     window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
   };

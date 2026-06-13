@@ -37,7 +37,7 @@ function OnboardingPage() {
         },
       }),
     onSuccess: () => {
-      toast.success("Till verified! Welcome to DukaPOS.");
+      toast.success("Till verified! Welcome to Trusit.");
       navigate({ to: "/dashboard" });
     },
     onError: (e: Error) => toast.error(e.message),

@@ -29,7 +29,7 @@ const getNotificationSettingsServer = createServerFn({ method: "GET" }).handler(
   return {
     emailAlerts: true,
     smsAlerts: false,
-    adminEmail: "admin@dukapos.com",
+    adminEmail: "admin@trusit.com",
     adminPhone: "+254712345678",
     recentNotifications: [],
   };
@@ -55,7 +55,7 @@ function NotificationsPage() {
 
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [smsAlerts, setSmsAlerts] = useState(false);
-  const [adminEmail, setAdminEmail] = useState("admin@dukapos.com");
+  const [adminEmail, setAdminEmail] = useState("admin@trusit.com");
   const [adminPhone, setAdminPhone] = useState("+254712345678");
 
   const { data: settingsData, isLoading: settingsLoading } = useQuery({

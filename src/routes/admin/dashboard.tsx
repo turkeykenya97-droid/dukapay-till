@@ -107,7 +107,7 @@ function AdminDashboard() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-600 mt-2">Welcome to the DukaPOS admin portal</p>
+          <p className="text-slate-600 mt-2">Welcome to the Trusit admin portal</p>
         </div>
 
         {/* Key Metrics Grid */}
