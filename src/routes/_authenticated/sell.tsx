@@ -38,6 +38,7 @@ import {
   Zap,
   Calculator as CalculatorIcon,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import { fmtKsh } from "@/lib/format";
 
@@ -88,6 +89,7 @@ function SellPage() {
   const [submitting, setSubmitting] = useState(false);
   const [pendingSaleId, setPendingSaleId] = useState<string | null>(null);
   const [finalStatus, setFinalStatus] = useState<"completed" | "failed" | null>(null);
+  const [paymentTimeout, setPaymentTimeout] = useState(false);
 
   useEffect(() => {
     shopFn({ data: undefined }).then((shop) => {
@@ -95,10 +97,19 @@ function SellPage() {
     });
   }, [shopFn]);
 
+  // Set 2-minute timeout for payment confirmation
+  useEffect(() => {
+    if (!pendingSaleId || finalStatus !== null || paymentTimeout) return;
+    const timer = setTimeout(() => {
+      setPaymentTimeout(true);
+    }, 120_000); // 2 minutes
+    return () => clearTimeout(timer);
+  }, [pendingSaleId, finalStatus, paymentTimeout]);
+
   useQuery({
     queryKey: ["sale-status", pendingSaleId],
     queryFn: () => getStatus({ data: { id: pendingSaleId! } }),
-    enabled: !!pendingSaleId && finalStatus === null,
+    enabled: !!pendingSaleId && finalStatus === null && !paymentTimeout,
     refetchInterval: 3000,
     select: (s) => {
       if (s.payment_status === "completed" || s.payment_status === "failed") {
@@ -239,6 +250,7 @@ function SellPage() {
     setCashOpen(false);
     setFinalStatus(null);
     setPendingSaleId(null);
+    setPaymentTimeout(false);
   };
 
   const handleCancel = async () => {
@@ -284,6 +296,20 @@ function SellPage() {
         onCancel={handleCancel}
         items={cart}
         phone={phone}
+      />
+    );
+  }
+
+  if (paymentTimeout && !finalStatus) {
+    return (
+      <PendingTimeoutScreen
+        mpesaAmount={mpesaAmount}
+        phone={phone}
+        onDone={() => {
+          resetSale();
+          navigate({ to: "/dashboard" });
+        }}
+        onCancel={handleCancel}
       />
     );
   }
@@ -1069,6 +1095,54 @@ function ResultScreen({
       <div className="space-y-2">
         <Button className="w-full" onClick={onDone}>
           {ok ? "Done" : "Try again"}
+        </Button>
+        {onCancel && (
+          <Button variant="outline" className="w-full" onClick={onCancel}>
+            Cancel sale
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PendingTimeoutScreen({
+  mpesaAmount,
+  phone,
+  onDone,
+  onCancel,
+}: {
+  mpesaAmount: number;
+  phone: string;
+  onDone: () => void;
+  onCancel?: () => void;
+}) {
+  return (
+    <div className="max-w-md mx-auto px-4 pt-10 text-center">
+      <div className="h-16 w-16 rounded-full mx-auto flex items-center justify-center mb-4 bg-warning/10 text-warning-foreground animate-pulse">
+        <AlertTriangle className="h-8 w-8" />
+      </div>
+      <h2 className="text-xl font-bold mb-1">Payment pending</h2>
+      <p className="text-sm text-muted-foreground mb-6">
+        We haven't received confirmation yet. Check M-Pesa on <strong>{phone}</strong> for the payment prompt or confirmation.
+      </p>
+      <div className="bg-warning/10 border border-warning/20 rounded-lg p-4 mb-6 text-left">
+        <p className="text-sm text-warning-foreground mb-2">
+          <strong>What to do:</strong>
+        </p>
+        <ul className="text-xs text-warning-foreground/80 space-y-1">
+          <li>✓ If prompted on phone, enter your M-Pesa PIN to confirm</li>
+          <li>✓ Once confirmed, check back here</li>
+          <li>✓ Payment status will update automatically</li>
+        </ul>
+      </div>
+      <div className="bg-card border border-border rounded-lg p-3 mb-6 text-left">
+        <div className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2">Amount</div>
+        <div className="text-2xl font-bold">{fmtKsh(mpesaAmount)}</div>
+      </div>
+      <div className="space-y-2">
+        <Button className="w-full" onClick={onDone}>
+          Done — Check back later
         </Button>
         {onCancel && (
           <Button variant="outline" className="w-full" onClick={onCancel}>
