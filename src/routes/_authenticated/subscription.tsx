@@ -32,7 +32,7 @@ const plansQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/_authenticated/subscription")({
-  head: () => ({ meta: [{ title: "Subscription Plans — DukaPOS" }] }),
+  head: () => ({ meta: [{ title: "Subscription Plans — Trusit" }] }),
   loader: ({ context }) =>
     Promise.all([
       context.queryClient.ensureQueryData(profileQuery),

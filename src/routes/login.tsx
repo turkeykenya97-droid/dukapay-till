@@ -75,7 +75,7 @@ function LoginPage() {
           <div className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-md">
             <Store className="h-7 w-7" />
           </div>
-          <h1 className="mt-4 text-2xl font-bold text-foreground">DukaPOS</h1>
+          <h1 className="mt-4 text-2xl font-bold text-foreground">Trusit</h1>
           <p className="text-sm text-muted-foreground">Sign in to your duka</p>
         </div>
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
@@ -120,7 +120,7 @@ function LoginPage() {
             </Button>
           </form>
           <p className="mt-4 text-sm text-center text-muted-foreground">
-            New to DukaPOS?{" "}
+            New to Trusit?{" "}
             <Link to="/register" className="text-primary font-medium hover:underline">
               Create an account
             </Link>

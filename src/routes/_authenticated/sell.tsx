@@ -49,7 +49,7 @@ const productsQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/_authenticated/sell")({
-  head: () => ({ meta: [{ title: "New sale — DukaPOS" }] }),
+  head: () => ({ meta: [{ title: "New sale — Trusit" }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
   component: SellPage,
 });

@@ -34,7 +34,7 @@ const productsQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/_authenticated/products")({
-  head: () => ({ meta: [{ title: "Products — DukaPOS" }] }),
+  head: () => ({ meta: [{ title: "Products — Trusit" }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
   component: ProductsPage,
 });
