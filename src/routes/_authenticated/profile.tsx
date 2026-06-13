@@ -416,9 +416,6 @@ function ProfilePage() {
                     <p className="text-sm font-medium text-slate-900 mb-1">{profile.shop_name}</p>
                     <p className="text-xs text-slate-600">Till: {profile.till_number}</p>
                   </div>
-                  <p className="text-xs text-slate-500 text-center max-w-xs break-all">
-                    {process.env.APP_URL || "https://dukapay-till.jiannamercy.workers.dev"}/pay/{profile.id}
-                  </p>
                 </div>
               )}
 
