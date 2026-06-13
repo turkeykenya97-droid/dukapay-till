@@ -61,7 +61,7 @@ function PublicPaymentPage() {
   useEffect(() => {
     async function loadShop() {
       try {
-        const shopData = await loadShopInfo({ shop_id: shopId });
+        const shopData = await loadShopInfo({ data: { shop_id: shopId } });
         setShop(shopData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load shop");
