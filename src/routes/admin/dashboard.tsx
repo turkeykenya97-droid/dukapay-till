@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/admin/dashboard")({
     if (!session) throw new Error("Not authenticated");
     return { session };
   },
+  errorComponent: () => <Navigate to="/admin/login" />,
   component: AdminDashboard,
 });
 

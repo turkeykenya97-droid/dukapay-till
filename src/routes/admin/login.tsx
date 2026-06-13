@@ -43,7 +43,8 @@ function AdminLoginPage() {
     onSuccess: () => {
       console.log("[admin-login] Success");
       toast.success("Welcome back!");
-      navigate({ to: "/admin/dashboard" });
+      // Use window.location.href to force full page reload and prevent infinite loops
+      window.location.href = "/admin/dashboard";
     },
     onError: (e: Error) => {
       console.error("[admin-login error]", e);

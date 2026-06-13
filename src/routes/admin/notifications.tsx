@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/admin/notifications")({
     if (!session) throw new Error("Not authenticated");
     return { session };
   },
+  errorComponent: () => <Navigate to="/admin/login" />,
   component: NotificationsPage,
 });
 

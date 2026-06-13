@@ -20,6 +20,19 @@ const adminLoginPhoneSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+// Session cache to prevent excessive database calls
+let sessionCache: {
+  token: string | null;
+  result: any;
+  timestamp: number;
+} = {
+  token: null,
+  result: null,
+  timestamp: 0,
+};
+
+const SESSION_CACHE_TTL = 1000; // 1 second in milliseconds
+
 function setAdminSessionCookie(token: string) {
   setCookie(ADMIN_SESSION_COOKIE, token, {
     httpOnly: true,
@@ -95,10 +108,30 @@ export const adminLogoutServer = createServerFn({ method: "POST" }).handler(asyn
 
 export const getAdminSessionServer = createServerFn({ method: "GET" }).handler(async () => {
   const token = getCookie(ADMIN_SESSION_COOKIE);
-  if (!token) return null;
+  const now = Date.now();
+  
+  // Return cached result if:
+  // 1. Same token as last call
+  // 2. Cache is still fresh (within TTL)
+  if (
+    token === sessionCache.token &&
+    now - sessionCache.timestamp < SESSION_CACHE_TTL
+  ) {
+    return sessionCache.result;
+  }
+  
+  // Token changed or cache expired - refresh
+  if (!token) {
+    sessionCache = { token: null, result: null, timestamp: now };
+    return null;
+  }
+  
   try {
-    return await verifyAdminJwt(token);
+    const result = await verifyAdminJwt(token);
+    sessionCache = { token, result, timestamp: now };
+    return result;
   } catch {
+    sessionCache = { token, result: null, timestamp: now };
     return null;
   }
 });
