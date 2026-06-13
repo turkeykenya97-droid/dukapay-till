@@ -322,7 +322,7 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
 });
 
 export const getAnalytics = createServerFn({ method: "GET" })
-  .inputValidator((d: unknown) => z.object({ startDate: z.string().optional(), endDate: z.string().optional() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ startDate: z.string().optional(), endDate: z.string().optional() }).parse(d || {}))
   .handler(async ({ data: dateRange }) => {
     const s = await requireSession();
     const shop = await getShopOrThrow(s.shop_id);
