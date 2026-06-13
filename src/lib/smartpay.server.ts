@@ -16,8 +16,8 @@ function authHeader(apiKey: string): string {
 function getCallbackUrl(): string {
   const explicit = process.env.SMARTPAY_CALLBACK_URL;
   if (explicit) return explicit;
-  const projectId = "c5eacb4c-0b92-46cd-a0cb-6edf8245cd2b";
-  return `https://project--${projectId}.lovable.app/api/public/webhooks/smartpay`;
+  const appUrl = process.env.APP_URL || "https://dukapay-till.jiannamercy.workers.dev";
+  return `${appUrl}/api/public/webhooks/smartpay`;
 }
 
 export function formatKenyanPhone(input: string): string {

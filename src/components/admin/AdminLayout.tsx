@@ -74,9 +74,9 @@ export function AdminLayout({ children, adminEmail, adminName }: AdminLayoutProp
           <div className="flex items-center justify-between p-4 border-b border-slate-200">
             <Link to="/admin/dashboard" className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-green-600 text-white flex items-center justify-center text-sm font-bold">
-                D
+                T
               </div>
-              <span className="font-bold text-slate-900">DukaPOS Admin</span>
+              <span className="font-bold text-slate-900">Trusit Admin</span>
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}

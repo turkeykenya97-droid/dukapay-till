@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PayShopIdRouteImport } from './routes/pay/$shopId'
 import { Route as AdminTransactionsRouteImport } from './routes/admin/transactions'
 import { Route as AdminSystemRouteImport } from './routes/admin/system'
 import { Route as AdminSupportRouteImport } from './routes/admin/support'
@@ -57,6 +58,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayShopIdRoute = PayShopIdRouteImport.update({
+  id: '/pay/$shopId',
+  path: '/pay/$shopId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminTransactionsRoute = AdminTransactionsRouteImport.update({
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/admin/support': typeof AdminSupportRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/transactions': typeof AdminTransactionsRoute
+  '/pay/$shopId': typeof PayShopIdRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRoutesByTo {
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/admin/support': typeof AdminSupportRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/transactions': typeof AdminTransactionsRoute
+  '/pay/$shopId': typeof PayShopIdRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRoutesById {
@@ -240,6 +248,7 @@ export interface FileRoutesById {
   '/admin/support': typeof AdminSupportRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/transactions': typeof AdminTransactionsRoute
+  '/pay/$shopId': typeof PayShopIdRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRouteTypes {
@@ -268,6 +277,7 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/system'
     | '/admin/transactions'
+    | '/pay/$shopId'
     | '/api/public/webhooks/smartpay'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/system'
     | '/admin/transactions'
+    | '/pay/$shopId'
     | '/api/public/webhooks/smartpay'
   id:
     | '__root__'
@@ -321,6 +332,7 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/system'
     | '/admin/transactions'
+    | '/pay/$shopId'
     | '/api/public/webhooks/smartpay'
   fileRoutesById: FileRoutesById
 }
@@ -330,6 +342,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  PayShopIdRoute: typeof PayShopIdRoute
   ApiPublicWebhooksSmartpayRoute: typeof ApiPublicWebhooksSmartpayRoute
 }
 
@@ -368,6 +381,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay/$shopId': {
+      id: '/pay/$shopId'
+      path: '/pay/$shopId'
+      fullPath: '/pay/$shopId'
+      preLoaderRoute: typeof PayShopIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/transactions': {
@@ -575,6 +595,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  PayShopIdRoute: PayShopIdRoute,
   ApiPublicWebhooksSmartpayRoute: ApiPublicWebhooksSmartpayRoute,
 }
 export const routeTree = rootRouteImport

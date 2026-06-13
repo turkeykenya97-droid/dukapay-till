@@ -20,6 +20,7 @@
     "enabled": true
   },
   "vars": {
+    "APP_URL": "https://dukapay-till.jiannamercy.workers.dev",
     "SMARTPAY_CALLBACK_URL": "https://jiannamercy/api/public/webhooks/smartpay",
     "SUBSCRIPTION_AMOUNT": "499",
     "TRIAL_DAYS": "14",

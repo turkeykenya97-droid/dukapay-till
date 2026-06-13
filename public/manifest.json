@@ -1,7 +1,7 @@
 {
-  "name": "DukaPOS",
-  "short_name": "DukaPOS",
-  "description": "M-Pesa POS system for Kenyan merchants",
+  "name": "Trusit",
+  "short_name": "Trusit",
+  "description": "M-Pesa payments for Kenyan merchants",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",

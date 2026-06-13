@@ -6,7 +6,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { getProfile, changePassword, getPlans, updateTillSettings } from "@/lib/auth.functions";
 import { initiateRenewal } from "@/lib/subscription.functions";
@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/dialog";
 import { PlanBadge } from "@/components/ui/plan-badge";
 import { fmtDate, fmtKsh } from "@/lib/format";
-import { User, Lock, CreditCard, Zap, Package, Calendar } from "lucide-react";
+import { User, Lock, CreditCard, Zap, Package, Calendar, QrCode, Download, Printer } from "lucide-react";
+import QRCode from "qrcode";
 
 const profileQuery = queryOptions({
   queryKey: ["profile"],
@@ -36,7 +37,7 @@ const plansQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/_authenticated/profile")({
-  head: () => ({ meta: [{ title: "Profile — DukaPOS" }] }),
+  head: () => ({ meta: [{ title: "Profile — Trusit" }] }),
   loader: ({ context }) =>
     Promise.all([
       context.queryClient.ensureQueryData(profileQuery),
@@ -59,6 +60,31 @@ function ProfilePage() {
   const [tillType, setTillType] = useState(profile?.till_type || "till");
   const [tillNumber, setTillNumber] = useState(profile?.till_number || "");
   const [selectedPlan, setSelectedPlan] = useState<"basic" | "pro" | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  // Generate QR code on mount
+  useEffect(() => {
+    async function generateQR() {
+      try {
+        const appUrl = process.env.APP_URL || "https://dukapay-till.jiannamercy.workers.dev";
+        const paymentUrl = `${appUrl}/pay/${profile?.id}`;
+        const qr = await QRCode.toDataURL(paymentUrl, {
+          width: 300,
+          margin: 2,
+          color: {
+            dark: "#16a34a",
+            light: "#ffffff",
+          },
+        });
+        setQrDataUrl(qr);
+      } catch (err) {
+        console.error("QR code generation failed:", err);
+      }
+    }
+    generateQR();
+  }, [profile?.id]);
 
   const changePwd = useServerFn(changePassword);
   const renew = useServerFn(initiateRenewal);
@@ -365,6 +391,84 @@ function ProfilePage() {
         </div>
       </div>
 
+      {/* Payment QR Code */}
+      {(() => {
+        // QR code is available for: trial users OR (pro plan users with non-expired status)
+        const canUseQR = profile.subscription_status === "trial" || 
+                        (profile.plan === "pro" && profile.subscription_status !== "expired");
+
+        if (canUseQR) {
+          return (
+            <div className="bg-card border border-border rounded-2xl p-6 mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <QrCode className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold">Payment QR Code</h2>
+              </div>
+
+              <p className="text-sm text-muted-foreground mb-4">
+                Share this QR code with your customers. They can scan it to pay directly without using your till.
+              </p>
+
+              {qrDataUrl && (
+                <div className="flex flex-col items-center gap-4 mb-6 p-4 bg-slate-50 rounded-lg">
+                  <img src={qrDataUrl} alt="Payment QR Code" className="h-48 w-48" />
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-slate-900 mb-1">{profile.shop_name}</p>
+                    <p className="text-xs text-slate-600">Till: {profile.till_number}</p>
+                  </div>
+                  <p className="text-xs text-slate-500 text-center max-w-xs break-all">
+                    {process.env.APP_URL || "https://dukapay-till.jiannamercy.workers.dev"}/pay/{profile.id}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    if (!qrDataUrl) return;
+                    const link = document.createElement("a");
+                    link.href = qrDataUrl;
+                    link.download = `trusit-qr-${profile.shop_name.replace(/\s+/g, "-")}.png`;
+                    link.click();
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download QR Code
+                </Button>
+                <Button
+                  onClick={() => setShowPrintPreview(true)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Card
+                </Button>
+              </div>
+            </div>
+          );
+        } else {
+          return (
+            <div className="bg-card border border-border rounded-2xl p-6 mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <QrCode className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-lg font-semibold">Payment QR Code</h2>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                <p className="text-sm text-amber-900 mb-4">
+                  QR Code payments are a <strong>Pro feature</strong>. Upgrade to Pro (KES 499/month) to generate your shop's payment QR code.
+                </p>
+                <Button className="bg-green-600 hover:bg-green-700">
+                  Upgrade to Pro
+                </Button>
+              </div>
+            </div>
+          );
+        }
+      })()}
+
       {/* Security */}
       <div className="bg-card border border-border rounded-2xl p-6">
         <div className="flex items-center gap-2 mb-4">
@@ -376,6 +480,68 @@ function ProfilePage() {
           Change Password
         </Button>
       </div>
+
+      {/* Print Payment Card Dialog */}
+      <Dialog open={showPrintPreview} onOpenChange={setShowPrintPreview}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Print Payment Card</DialogTitle>
+          </DialogHeader>
+          <div ref={printRef} className="bg-white p-8">
+            <div
+              className="w-full max-w-xs mx-auto bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 text-center border-4 border-green-600"
+              style={{ aspectRatio: "1/1.4" }}
+            >
+              {/* Trusit Branding */}
+              <div className="mb-6">
+                <div className="h-10 w-10 rounded-full bg-green-600 text-white flex items-center justify-center mx-auto mb-2 font-bold text-lg">
+                  T
+                </div>
+                <p className="text-xs font-bold text-green-700">TRUSIT</p>
+              </div>
+
+              {/* QR Code */}
+              {qrDataUrl && (
+                <div className="mb-6 flex justify-center">
+                  <img src={qrDataUrl} alt="Payment QR" style={{ width: "240px", height: "240px" }} />
+                </div>
+              )}
+
+              {/* Shop Info */}
+              <p className="text-2xl font-bold text-slate-900 mb-2">{profile.shop_name}</p>
+              <p className="text-lg font-semibold text-slate-700 mb-4">
+                Till: {profile.till_number}
+              </p>
+
+              {/* Instruction */}
+              <p className="text-sm font-bold text-green-700 mb-6">Scan to pay via M-Pesa</p>
+
+              {/* Powered by Trusit */}
+              <p className="text-xs text-slate-600 mt-auto">Powered by Trusit</p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                const printWindow = window.open("", "", "width=600,height=800");
+                if (printWindow && printRef.current) {
+                  printWindow.document.write(printRef.current.innerHTML);
+                  printWindow.document.close();
+                  printWindow.print();
+                }
+              }}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print Card
+            </Button>
+            <Button onClick={() => setShowPrintPreview(false)} variant="outline" className="flex-1">
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Change Password Dialog */}
       <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dukapos-v1';
+const CACHE_NAME = 'trusit-v1';
 const OFFLINE_URL = '/offline.html';
 
 // Static assets to cache on install

@@ -68,3 +68,25 @@ export async function incrementTransactionCount(shopId: string): Promise<void> {
     })
     .eq("id", shopId);
 }
+
+/**
+ * Check if a shop can access a specific feature based on plan and subscription status
+ * Features: 'analytics' | 'stock' | 'receipts' | 'qr_code'
+ */
+export function canAccessFeature(
+  feature: "analytics" | "stock" | "receipts" | "qr_code",
+  plan: string,
+  status: string
+): boolean {
+  // Trial users get all features
+  if (status === "trial") return true;
+
+  // Expired subscriptions get no features
+  if (status === "expired") return false;
+
+  // Pro plan gets all features
+  if (plan === "pro") return true;
+
+  // Basic plan gets no extra features (only core POS)
+  return false;
+}
