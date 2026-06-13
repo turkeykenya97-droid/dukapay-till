@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
-import { initiatePublicPayment } from "@/lib/public-payment.functions";
+import { initiatePublicPayment, getPublicShopInfo } from "@/lib/public-payment.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { fmtKsh } from "@/lib/format";
 
@@ -46,6 +45,7 @@ interface Shop {
 function PublicPaymentPage() {
   const { shopId } = Route.useParams();
   const initiate = useServerFn(initiatePublicPayment);
+  const loadShopInfo = useServerFn(getPublicShopInfo);
 
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,19 +61,8 @@ function PublicPaymentPage() {
   useEffect(() => {
     async function loadShop() {
       try {
-        const { data, error: err } = await supabaseAnon
-          .from("shops")
-          .select("id, shop_name, owner_name, till_number, subscription_expiry, trial_start, plan")
-          .eq("id", shopId)
-          .maybeSingle();
-
-        if (err) throw err;
-        if (!data) {
-          setError("Shop not found");
-          return;
-        }
-
-        setShop(data);
+        const shopData = await loadShopInfo({ shop_id: shopId });
+        setShop(shopData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load shop");
       } finally {
@@ -82,7 +71,7 @@ function PublicPaymentPage() {
     }
 
     loadShop();
-  }, [shopId]);
+  }, [shopId, loadShopInfo]);
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();

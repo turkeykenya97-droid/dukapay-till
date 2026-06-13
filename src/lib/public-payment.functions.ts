@@ -10,6 +10,46 @@ const publicPaymentSchema = z.object({
   phone: z.string().min(10),
 });
 
+const shopInfoSchema = z.object({
+  shop_id: z.string().uuid(),
+});
+
+export const getPublicShopInfo = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => shopInfoSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { data: shop, error: shopError } = await supabaseAdmin
+      .from("shops")
+      .select("id, shop_name, owner_name, till_number, subscription_status, subscription_expiry, trial_start, plan")
+      .eq("id", data.shop_id)
+      .maybeSingle();
+
+    if (shopError) {
+      console.error("[getPublicShopInfo]", shopError);
+      throw new Error("Failed to load shop details");
+    }
+
+    if (!shop) {
+      throw new Error("Shop not found");
+    }
+
+    // Verify subscription is active
+    const status = computeSubscriptionStatus(shop.subscription_expiry, shop.trial_start);
+    if (status === "expired") {
+      throw new Error("Shop subscription inactive");
+    }
+
+    return {
+      id: shop.id,
+      shop_name: shop.shop_name,
+      owner_name: shop.owner_name,
+      till_number: shop.till_number,
+      subscription_status: shop.subscription_status,
+      subscription_expiry: shop.subscription_expiry,
+      trial_start: shop.trial_start,
+      plan: shop.plan,
+    };
+  });
+
 export const initiatePublicPayment = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => publicPaymentSchema.parse(d))
   .handler(async ({ data }) => {
