@@ -1,9 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { adminLoginServer } from "@/lib/admin-auth.server";
+import { adminLoginServer, getAdminSessionServer } from "@/lib/admin-auth.server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,16 @@ export const Route = createFileRoute("/admin/login")({
       { name: "description", content: "Admin portal login for Trusit." },
     ],
   }),
+  beforeLoad: async () => {
+    const session = await getAdminSessionServer();
+    if (session) {
+      throw new Error("Already authenticated");
+    }
+    return {};
+  },
+  errorComponent: () => {
+    return <Navigate to="/admin/dashboard" />;
+  },
   component: AdminLoginPage,
 });
 

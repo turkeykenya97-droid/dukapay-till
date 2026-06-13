@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -25,6 +25,8 @@ function LoginPage() {
   const login = useServerFn(loginShop);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const clickCount = useRef(0);
+  const clickTimer = useRef<NodeJS.Timeout>();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const mutation = useMutation({
@@ -82,11 +84,30 @@ function LoginPage() {
     }
   };
 
+  const handleLogoClick = () => {
+    clickCount.current += 1;
+    
+    if (clickCount.current === 1) {
+      clickTimer.current = setTimeout(() => {
+        clickCount.current = 0;
+      }, 2000);
+    }
+    
+    if (clickCount.current >= 3) {
+      clearTimeout(clickTimer.current);
+      clickCount.current = 0;
+      navigate({ to: "/admin/login" });
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-6">
-          <div className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-md">
+          <div 
+            onClick={handleLogoClick}
+            className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-md"
+          >
             <Store className="h-7 w-7" />
           </div>
           <h1 className="mt-4 text-2xl font-bold text-foreground">Trusit</h1>
