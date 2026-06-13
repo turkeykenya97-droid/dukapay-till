@@ -9,9 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { fmtKsh } from "@/lib/format";
 
-export const Route = createFileRoute("/pay/$shopId")({
-  component: PublicPaymentPage,
-  errorComponent: ({ error }) => (
+function ErrorComponent({ error }: { error: Error }) {
+  return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
         <div className="h-16 w-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
@@ -26,7 +25,12 @@ export const Route = createFileRoute("/pay/$shopId")({
         </Button>
       </div>
     </div>
-  ),
+  );
+}
+
+export const Route = createFileRoute("/pay/$shopId")({
+  component: PublicPaymentPage,
+  errorComponent: ({ error }) => <ErrorComponent error={error} />,
 });
 
 interface Shop {

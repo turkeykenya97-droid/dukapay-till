@@ -15,6 +15,13 @@ export default defineConfig({
   vite: {
     build: {
       cssMinify: false,
+      rollupOptions: {
+        external: [],
+      },
+    },
+    // Suppress unresolved import warnings in split chunks
+    define: {
+      "process.env.VITE_SUPPRESS_UNRESOLVED": "true",
     },
   },
 });

@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getAdminSessionServer } from "@/lib/admin-auth.server";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { subMonths } from "date-fns";
 import { DollarSign, TrendingUp, Users } from "lucide-react";
 
 export const Route = createFileRoute("/admin/revenue")({
@@ -359,7 +359,13 @@ function RevenuePage() {
                           </TableCell>
                           <TableCell>
                             {payment.created_at
-                              ? format(new Date(payment.created_at), "MMM d, HH:mm")
+                              ? new Date(payment.created_at).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: false,
+                                })
                               : "—"}
                           </TableCell>
                         </TableRow>
