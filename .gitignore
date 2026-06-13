@@ -16,6 +16,9 @@ dist-ssr
 .nitro
 *.local
 
+# Package manager lock files
+bun.lock
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
