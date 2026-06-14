@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { PlanBadge } from "@/components/ui/plan-badge";
 import { fmtDate } from "@/lib/format";
 import { CheckCircle2, AlertCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getUserShops } from "@/lib/multi-user.functions";
+import { useIsShopOwner } from "@/hooks/use-role";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +46,37 @@ export const Route = createFileRoute("/_authenticated/subscription")({
 });
 
 function SubscriptionPage() {
+  const { data: shops = [] } = useQuery({
+    queryKey: ["userShops"],
+    queryFn: () => getUserShops(),
+  });
+
+  const currentShop = shops[0];
+  const { isOwner, isLoading: roleLoading } = useIsShopOwner(currentShop?.shop_id);
+
+  // Show loading state
+  if (roleLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  // Show access denied for staff members
+  if (!isOwner) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Alert className="max-w-md border-yellow-200 bg-yellow-50">
+          <AlertCircle className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-700">
+            Only shop owners can manage subscription plans. Please contact your shop owner.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  return <SubscriptionContent />;
+}
+
+function SubscriptionContent() {
   const { data: profile } = useSuspenseQuery(profileQuery);
   const { data: plansData } = useSuspenseQuery(plansQuery);
   const qc = useQueryClient();

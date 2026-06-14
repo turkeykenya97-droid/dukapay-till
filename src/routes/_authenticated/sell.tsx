@@ -11,7 +11,8 @@ import { toast } from "sonner";
 import { listProducts } from "@/lib/products.functions";
 import { createSale, getSaleStatus, cancelSale } from "@/lib/sales.functions";
 import { verifyPin, getCurrentShop } from "@/lib/auth.functions";
-import { getReceiptTemplate, storeReceiptData, getProductByBarcode } from "@/lib/receipt.functions";
+import { getReceiptTemplate, storeReceiptData } from "@/lib/receipt.functions";
+import { scanBarcode } from "@/lib/barcode.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,7 +83,7 @@ function SellPage() {
   const getStatus = useServerFn(getSaleStatus);
   const cancel = useServerFn(cancelSale);
   const shopFn = useServerFn(getCurrentShop);
-  const lookupBarcode = useServerFn(getProductByBarcode);
+  const lookupBarcode = useServerFn(scanBarcode);
 
   const [tab, setTab] = useState<Tab>("inventory");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -99,9 +100,11 @@ function SellPage() {
   const [finalStatus, setFinalStatus] = useState<"completed" | "failed" | null>(null);
   const [paymentTimeout, setPaymentTimeout] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [shopId, setShopId] = useState<string | null>(null);
 
   useEffect(() => {
     shopFn({ data: undefined }).then((shop) => {
+      setShopId(shop?.id || null);
       if (!shop?.pin_session_valid) setPinOpen(true);
     });
   }, [shopFn]);
@@ -236,10 +239,15 @@ function SellPage() {
   const removeItem = (key: string) => setCart((c) => c.filter((i) => i.key !== key));
 
   const handleBarcodeScan = async (barcode: string) => {
-    if (barcodeLookupLoading) return;
+    if (barcodeLookupLoading || !shopId) return;
     setBarcodeLookupLoading(true);
     try {
-      const product = await lookupBarcode({ data: { barcode } });
+      const product = await lookupBarcode({ 
+        data: { 
+          shop_id: shopId,
+          barcode 
+        } 
+      });
       if (product) {
         addInventoryItem(product as any);
         toast.success(`Added: ${product.name}`);

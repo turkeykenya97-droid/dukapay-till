@@ -11,19 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReceiptSale_idRouteImport } from './routes/receipt.$sale_id'
 import { Route as PayShopIdRouteImport } from './routes/pay/$shopId'
-import { Route as InviteTokenRouteImport } from './routes/invite.$token'
-import { Route as DashboardSupervisorRouteImport } from './routes/dashboard/supervisor'
-import { Route as DashboardInventoryRouteImport } from './routes/dashboard/inventory'
-import { Route as DashboardCashierRouteImport } from './routes/dashboard/cashier'
-import { Route as DashboardBranchManagerRouteImport } from './routes/dashboard/branch-manager'
-import { Route as DashboardAdminRouteImport } from './routes/dashboard/admin'
-import { Route as DashboardAccountantRouteImport } from './routes/dashboard/accountant'
 import { Route as AdminTransactionsRouteImport } from './routes/admin/transactions'
 import { Route as AdminSystemRouteImport } from './routes/admin/system'
 import { Route as AdminSupportRouteImport } from './routes/admin/support'
@@ -44,7 +37,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedSettingsStaffManagementRouteImport } from './routes/_authenticated/settings/staff-management'
+import { Route as AuthenticatedSettingsStaffRouteImport } from './routes/_authenticated/settings/staff'
 import { Route as ApiPublicWebhooksSmartpayRouteImport } from './routes/api/public/webhooks/smartpay'
 
 const RegisterRoute = RegisterRouteImport.update({
@@ -57,14 +50,14 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcceptInviteRoute = AcceptInviteRouteImport.update({
+  id: '/accept-invite',
+  path: '/accept-invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -85,41 +78,6 @@ const PayShopIdRoute = PayShopIdRouteImport.update({
   id: '/pay/$shopId',
   path: '/pay/$shopId',
   getParentRoute: () => rootRouteImport,
-} as any)
-const InviteTokenRoute = InviteTokenRouteImport.update({
-  id: '/invite/$token',
-  path: '/invite/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardSupervisorRoute = DashboardSupervisorRouteImport.update({
-  id: '/supervisor',
-  path: '/supervisor',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardInventoryRoute = DashboardInventoryRouteImport.update({
-  id: '/inventory',
-  path: '/inventory',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardCashierRoute = DashboardCashierRouteImport.update({
-  id: '/cashier',
-  path: '/cashier',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardBranchManagerRoute = DashboardBranchManagerRouteImport.update({
-  id: '/branch-manager',
-  path: '/branch-manager',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardAdminRoute = DashboardAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardAccountantRoute = DashboardAccountantRouteImport.update({
-  id: '/accountant',
-  path: '/accountant',
-  getParentRoute: () => DashboardRoute,
 } as any)
 const AdminTransactionsRoute = AdminTransactionsRouteImport.update({
   id: '/transactions',
@@ -222,10 +180,10 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedSettingsStaffManagementRoute =
-  AuthenticatedSettingsStaffManagementRouteImport.update({
-    id: '/settings/staff-management',
-    path: '/settings/staff-management',
+const AuthenticatedSettingsStaffRoute =
+  AuthenticatedSettingsStaffRouteImport.update({
+    id: '/settings/staff',
+    path: '/settings/staff',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const ApiPublicWebhooksSmartpayRoute =
@@ -237,11 +195,12 @@ const ApiPublicWebhooksSmartpayRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/admin': typeof AdminRouteWithChildren
-  '/dashboard': typeof AuthenticatedDashboardRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/products': typeof AuthenticatedProductsRoute
@@ -260,25 +219,19 @@ export interface FileRoutesByFullPath {
   '/admin/support': typeof AdminSupportRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/transactions': typeof AdminTransactionsRoute
-  '/dashboard/accountant': typeof DashboardAccountantRoute
-  '/dashboard/admin': typeof DashboardAdminRoute
-  '/dashboard/branch-manager': typeof DashboardBranchManagerRoute
-  '/dashboard/cashier': typeof DashboardCashierRoute
-  '/dashboard/inventory': typeof DashboardInventoryRoute
-  '/dashboard/supervisor': typeof DashboardSupervisorRoute
-  '/invite/$token': typeof InviteTokenRoute
   '/pay/$shopId': typeof PayShopIdRoute
   '/receipt/$sale_id': typeof ReceiptSale_idRoute
-  '/settings/staff-management': typeof AuthenticatedSettingsStaffManagementRoute
+  '/settings/staff': typeof AuthenticatedSettingsStaffRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/admin': typeof AdminRouteWithChildren
-  '/dashboard': typeof AuthenticatedDashboardRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/products': typeof AuthenticatedProductsRoute
@@ -297,24 +250,17 @@ export interface FileRoutesByTo {
   '/admin/support': typeof AdminSupportRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/transactions': typeof AdminTransactionsRoute
-  '/dashboard/accountant': typeof DashboardAccountantRoute
-  '/dashboard/admin': typeof DashboardAdminRoute
-  '/dashboard/branch-manager': typeof DashboardBranchManagerRoute
-  '/dashboard/cashier': typeof DashboardCashierRoute
-  '/dashboard/inventory': typeof DashboardInventoryRoute
-  '/dashboard/supervisor': typeof DashboardSupervisorRoute
-  '/invite/$token': typeof InviteTokenRoute
   '/pay/$shopId': typeof PayShopIdRoute
   '/receipt/$sale_id': typeof ReceiptSale_idRoute
-  '/settings/staff-management': typeof AuthenticatedSettingsStaffManagementRoute
+  '/settings/staff': typeof AuthenticatedSettingsStaffRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/accept-invite': typeof AcceptInviteRoute
   '/admin': typeof AdminRouteWithChildren
-  '/dashboard': typeof DashboardRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
@@ -337,27 +283,21 @@ export interface FileRoutesById {
   '/admin/support': typeof AdminSupportRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/transactions': typeof AdminTransactionsRoute
-  '/dashboard/accountant': typeof DashboardAccountantRoute
-  '/dashboard/admin': typeof DashboardAdminRoute
-  '/dashboard/branch-manager': typeof DashboardBranchManagerRoute
-  '/dashboard/cashier': typeof DashboardCashierRoute
-  '/dashboard/inventory': typeof DashboardInventoryRoute
-  '/dashboard/supervisor': typeof DashboardSupervisorRoute
-  '/invite/$token': typeof InviteTokenRoute
   '/pay/$shopId': typeof PayShopIdRoute
   '/receipt/$sale_id': typeof ReceiptSale_idRoute
-  '/_authenticated/settings/staff-management': typeof AuthenticatedSettingsStaffManagementRoute
+  '/_authenticated/settings/staff': typeof AuthenticatedSettingsStaffRoute
   '/api/public/webhooks/smartpay': typeof ApiPublicWebhooksSmartpayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/accept-invite'
     | '/admin'
-    | '/dashboard'
     | '/login'
     | '/register'
     | '/analytics'
+    | '/dashboard'
     | '/history'
     | '/onboarding'
     | '/products'
@@ -376,25 +316,19 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/system'
     | '/admin/transactions'
-    | '/dashboard/accountant'
-    | '/dashboard/admin'
-    | '/dashboard/branch-manager'
-    | '/dashboard/cashier'
-    | '/dashboard/inventory'
-    | '/dashboard/supervisor'
-    | '/invite/$token'
     | '/pay/$shopId'
     | '/receipt/$sale_id'
-    | '/settings/staff-management'
+    | '/settings/staff'
     | '/api/public/webhooks/smartpay'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/accept-invite'
     | '/admin'
-    | '/dashboard'
     | '/login'
     | '/register'
     | '/analytics'
+    | '/dashboard'
     | '/history'
     | '/onboarding'
     | '/products'
@@ -413,23 +347,16 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/system'
     | '/admin/transactions'
-    | '/dashboard/accountant'
-    | '/dashboard/admin'
-    | '/dashboard/branch-manager'
-    | '/dashboard/cashier'
-    | '/dashboard/inventory'
-    | '/dashboard/supervisor'
-    | '/invite/$token'
     | '/pay/$shopId'
     | '/receipt/$sale_id'
-    | '/settings/staff-management'
+    | '/settings/staff'
     | '/api/public/webhooks/smartpay'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/accept-invite'
     | '/admin'
-    | '/dashboard'
     | '/login'
     | '/register'
     | '/_authenticated/analytics'
@@ -452,27 +379,19 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/system'
     | '/admin/transactions'
-    | '/dashboard/accountant'
-    | '/dashboard/admin'
-    | '/dashboard/branch-manager'
-    | '/dashboard/cashier'
-    | '/dashboard/inventory'
-    | '/dashboard/supervisor'
-    | '/invite/$token'
     | '/pay/$shopId'
     | '/receipt/$sale_id'
-    | '/_authenticated/settings/staff-management'
+    | '/_authenticated/settings/staff'
     | '/api/public/webhooks/smartpay'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AcceptInviteRoute: typeof AcceptInviteRoute
   AdminRoute: typeof AdminRouteWithChildren
-  DashboardRoute: typeof DashboardRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
-  InviteTokenRoute: typeof InviteTokenRoute
   PayShopIdRoute: typeof PayShopIdRoute
   ReceiptSale_idRoute: typeof ReceiptSale_idRoute
   ApiPublicWebhooksSmartpayRoute: typeof ApiPublicWebhooksSmartpayRoute
@@ -494,18 +413,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin': {
       id: '/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accept-invite': {
+      id: '/accept-invite'
+      path: '/accept-invite'
+      fullPath: '/accept-invite'
+      preLoaderRoute: typeof AcceptInviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -535,55 +454,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/pay/$shopId'
       preLoaderRoute: typeof PayShopIdRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/invite/$token': {
-      id: '/invite/$token'
-      path: '/invite/$token'
-      fullPath: '/invite/$token'
-      preLoaderRoute: typeof InviteTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/supervisor': {
-      id: '/dashboard/supervisor'
-      path: '/supervisor'
-      fullPath: '/dashboard/supervisor'
-      preLoaderRoute: typeof DashboardSupervisorRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/inventory': {
-      id: '/dashboard/inventory'
-      path: '/inventory'
-      fullPath: '/dashboard/inventory'
-      preLoaderRoute: typeof DashboardInventoryRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/cashier': {
-      id: '/dashboard/cashier'
-      path: '/cashier'
-      fullPath: '/dashboard/cashier'
-      preLoaderRoute: typeof DashboardCashierRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/branch-manager': {
-      id: '/dashboard/branch-manager'
-      path: '/branch-manager'
-      fullPath: '/dashboard/branch-manager'
-      preLoaderRoute: typeof DashboardBranchManagerRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/admin': {
-      id: '/dashboard/admin'
-      path: '/admin'
-      fullPath: '/dashboard/admin'
-      preLoaderRoute: typeof DashboardAdminRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/accountant': {
-      id: '/dashboard/accountant'
-      path: '/accountant'
-      fullPath: '/dashboard/accountant'
-      preLoaderRoute: typeof DashboardAccountantRouteImport
-      parentRoute: typeof DashboardRoute
     }
     '/admin/transactions': {
       id: '/admin/transactions'
@@ -725,11 +595,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/settings/staff-management': {
-      id: '/_authenticated/settings/staff-management'
-      path: '/settings/staff-management'
-      fullPath: '/settings/staff-management'
-      preLoaderRoute: typeof AuthenticatedSettingsStaffManagementRouteImport
+    '/_authenticated/settings/staff': {
+      id: '/_authenticated/settings/staff'
+      path: '/settings/staff'
+      fullPath: '/settings/staff'
+      preLoaderRoute: typeof AuthenticatedSettingsStaffRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/api/public/webhooks/smartpay': {
@@ -751,7 +621,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSellRoute: typeof AuthenticatedSellRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
-  AuthenticatedSettingsStaffManagementRoute: typeof AuthenticatedSettingsStaffManagementRoute
+  AuthenticatedSettingsStaffRoute: typeof AuthenticatedSettingsStaffRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -763,8 +633,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSellRoute: AuthenticatedSellRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
-  AuthenticatedSettingsStaffManagementRoute:
-    AuthenticatedSettingsStaffManagementRoute,
+  AuthenticatedSettingsStaffRoute: AuthenticatedSettingsStaffRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -803,36 +672,13 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface DashboardRouteChildren {
-  DashboardAccountantRoute: typeof DashboardAccountantRoute
-  DashboardAdminRoute: typeof DashboardAdminRoute
-  DashboardBranchManagerRoute: typeof DashboardBranchManagerRoute
-  DashboardCashierRoute: typeof DashboardCashierRoute
-  DashboardInventoryRoute: typeof DashboardInventoryRoute
-  DashboardSupervisorRoute: typeof DashboardSupervisorRoute
-}
-
-const DashboardRouteChildren: DashboardRouteChildren = {
-  DashboardAccountantRoute: DashboardAccountantRoute,
-  DashboardAdminRoute: DashboardAdminRoute,
-  DashboardBranchManagerRoute: DashboardBranchManagerRoute,
-  DashboardCashierRoute: DashboardCashierRoute,
-  DashboardInventoryRoute: DashboardInventoryRoute,
-  DashboardSupervisorRoute: DashboardSupervisorRoute,
-}
-
-const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
-  DashboardRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AcceptInviteRoute: AcceptInviteRoute,
   AdminRoute: AdminRouteWithChildren,
-  DashboardRoute: DashboardRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
-  InviteTokenRoute: InviteTokenRoute,
   PayShopIdRoute: PayShopIdRoute,
   ReceiptSale_idRoute: ReceiptSale_idRoute,
   ApiPublicWebhooksSmartpayRoute: ApiPublicWebhooksSmartpayRoute,

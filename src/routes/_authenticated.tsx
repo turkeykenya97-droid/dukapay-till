@@ -3,8 +3,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getCurrentShop, logout } from "@/lib/auth.functions";
-import { LayoutDashboard, Package, History, LogOut, ShoppingCart, BarChart3, User, CreditCard, MoreVertical } from "lucide-react";
+import { LayoutDashboard, Package, History, LogOut, ShoppingCart, BarChart3, User, CreditCard, MoreVertical, Users } from "lucide-react";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { useIsShopOwner } from "@/hooks/use-role";
+import { PlanBadge } from "@/components/plan-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +32,7 @@ function AuthenticatedLayout() {
   const navigate = useNavigate();
   const logoutFn = useServerFn(logout);
   const showNav = !shop.needs_onboarding;
+  const { isOwner } = useIsShopOwner(shop.id);
 
   const logoutMutation = useMutation({
     mutationFn: () => logoutFn({ data: undefined }),
@@ -39,17 +42,27 @@ function AuthenticatedLayout() {
     },
   });
 
-  const items = [
+  // Base items visible to all members
+  const baseItems = [
     { to: "/dashboard", label: "Home", icon: LayoutDashboard },
     { to: "/products", label: "Products", icon: Package },
     { to: "/sell", label: "Sell", icon: ShoppingCart },
     { to: "/history", label: "History", icon: History },
     { to: "/analytics", label: "Analytics", icon: BarChart3 },
-    { to: "/subscription", label: "Subscription", icon: CreditCard },
-    { to: "/profile", label: "Profile", icon: User },
   ] as const;
 
-  // Primary items visible on mobile, all on desktop
+  // Owner-only items
+  const ownerItems = [
+    { to: "/subscription", label: "Subscription", icon: CreditCard },
+  ] as const;
+
+  // Settings items (always visible)
+  const settingsItems = [
+    { to: "/profile", label: "Profile", icon: User },
+    ...(isOwner ? [{ to: "/settings/staff", label: "Staff", icon: Users }] : []),
+  ] as const;
+
+  const items = [...baseItems, ...ownerItems, ...settingsItems] as const;
   const primaryItems = items.slice(0, 4);
   const secondaryItems = items.slice(4);
 
@@ -73,13 +86,18 @@ function AuthenticatedLayout() {
     <div className="min-h-screen bg-background lg:flex">
       {/* Desktop side nav */}
       <aside className="hidden lg:flex flex-col w-60 border-r border-border bg-card sticky top-0 h-screen">
-        <div className="px-5 py-5 border-b border-border flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl flex items-center justify-center text-primary-foreground font-bold text-sm" style={{ background: "var(--gradient-primary)" }}>
-            {initials || "DP"}
+        <div className="px-5 py-4 border-b border-border">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center text-primary-foreground font-bold text-sm" style={{ background: "var(--gradient-primary)" }}>
+              {initials || "DP"}
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-bold text-foreground leading-tight">Trusit</div>
+              <div className="text-xs text-muted-foreground truncate">{shop.shop_name}</div>
+            </div>
           </div>
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-foreground leading-tight">Trusit</div>
-            <div className="text-xs text-muted-foreground truncate">{shop.shop_name}</div>
+          <div className="ml-0 mt-2">
+            <PlanBadge variant="detailed" showDays={true} />
           </div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">

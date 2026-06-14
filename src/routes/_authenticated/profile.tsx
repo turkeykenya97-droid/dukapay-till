@@ -8,6 +8,8 @@ import {
 } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import { useFeatureAccess } from "@/hooks/use-access";
+import { ProFeatureOverlay } from "@/components/pro-feature-overlay";
 import { getProfile, changePassword, getPlans, updateTillSettings } from "@/lib/auth.functions";
 import { initiateRenewal } from "@/lib/subscription.functions";
 import { Button } from "@/components/ui/button";
@@ -49,6 +51,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 function ProfilePage() {
   const { data: profile } = useSuspenseQuery(profileQuery);
   const { data: plansData } = useSuspenseQuery(plansQuery);
+  const { allowed: canUseQR } = useFeatureAccess("qr_to_pay");
   const qc = useQueryClient();
 
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
@@ -393,10 +396,6 @@ function ProfilePage() {
 
       {/* Payment QR Code */}
       {(() => {
-        // QR code is available for: trial users OR (pro plan users with non-expired status)
-        const canUseQR = profile.subscription_status === "trial" || 
-                        (profile.plan === "pro" && profile.subscription_status !== "expired");
-
         if (canUseQR) {
           return (
             <div className="bg-card border border-border rounded-2xl p-6 mb-6">
@@ -447,21 +446,13 @@ function ProfilePage() {
           );
         } else {
           return (
-            <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <QrCode className="h-5 w-5 text-muted-foreground" />
-                <h2 className="text-lg font-semibold">Payment QR Code</h2>
-              </div>
-
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
-                <p className="text-sm text-amber-900 mb-4">
-                  QR Code payments are a <strong>Pro feature</strong>. Upgrade to Pro (KES 499/month) to generate your shop's payment QR code.
-                </p>
-                <Button className="bg-green-600 hover:bg-green-700">
-                  Upgrade to Pro
-                </Button>
-              </div>
-            </div>
+            <ProFeatureOverlay
+              feature="qr_to_pay"
+              title="Payment QR Code"
+              description="Let customers scan a QR code to pay you directly, without needing your till. Perfect for contactless payments."
+            >
+              <div className="bg-card border border-border rounded-2xl p-6 mb-6 h-96" />
+            </ProFeatureOverlay>
           );
         }
       })()}

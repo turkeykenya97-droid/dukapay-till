@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useFeatureAccess } from "@/hooks/use-access";
+import { ProFeatureOverlay } from "@/components/pro-feature-overlay";
 import {
   BarChart,
   Bar,
@@ -19,8 +21,7 @@ import {
 import { getAnalytics } from "@/lib/sales.functions";
 import { fmtKsh } from "@/lib/format";
 import { BarChart3, TrendingUp, Package, AlertTriangle, Trophy, Users, CreditCard, Smartphone } from "lucide-react";
-import { UpgradePrompt } from "@/components/ui/upgrade-prompt";
-import { useNavigate } from "@tanstack/react-router";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const analyticsQuery = queryOptions({
   queryKey: ["analytics"],
@@ -31,38 +32,31 @@ const analyticsQuery = queryOptions({
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({ meta: [{ title: "Analytics — Trusit" }] }),
-  errorComponent: ({ error }) => {
-    const isUpgradeRequired = error instanceof Error && error.message === "UPGRADE_REQUIRED";
-    const navigate = useNavigate();
-
-    if (isUpgradeRequired) {
-      return (
-        <div className="max-w-4xl mx-auto px-4 lg:px-8 pt-6 pb-4">
-          <h1 className="text-2xl font-bold mb-6">Analytics</h1>
-          <UpgradePrompt
-            feature="Analytics"
-            description="Get detailed insights into your sales patterns, top products, and customer trends with pro features."
-            onUpgradeClick={() => navigate({ to: "/profile" })}
-          />
-        </div>
-      );
-    }
-
-    return (
-      <div className="max-w-4xl mx-auto px-4 lg:px-8 pt-6 pb-4">
-        <h1 className="text-2xl font-bold mb-6">Analytics</h1>
-        <div className="bg-destructive/10 border border-destructive rounded-lg p-4">
-          <p className="text-destructive font-medium">Error loading analytics</p>
-          <p className="text-sm text-muted-foreground">{error instanceof Error ? error.message : "An error occurred"}</p>
-        </div>
-      </div>
-    );
-  },
-  loader: ({ context }) => context.queryClient.ensureQueryData(analyticsQuery),
   component: AnalyticsPage,
 });
 
 function AnalyticsPage() {
+  const { allowed: canViewAnalytics } = useFeatureAccess("analytics");
+
+  if (!canViewAnalytics) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 lg:px-8 pt-6 pb-4">
+        <h1 className="text-2xl font-bold mb-6">Analytics</h1>
+        <ProFeatureOverlay
+          feature="analytics"
+          title="Analytics Dashboard"
+          description="Get detailed insights into your sales patterns, top products, and customer trends."
+        >
+          <div className="h-96 bg-muted rounded-lg" />
+        </ProFeatureOverlay>
+      </div>
+    );
+  }
+
+  return <AnalyticsContent />;
+}
+
+function AnalyticsContent() {
   const { data } = useSuspenseQuery(analyticsQuery);
 
   const hasAnyData = data.summary.sales_count_month > 0;

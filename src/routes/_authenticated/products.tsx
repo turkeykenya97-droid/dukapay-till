@@ -14,6 +14,7 @@ import {
   updateProduct,
   deleteProduct,
 } from "@/lib/products.functions";
+import { ProductBarcodeManager } from "@/components/barcode/product-barcode-manager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -222,62 +223,72 @@ function ProductDialog({
         <DialogHeader>
           <DialogTitle>{editing ? "Edit product" : "Add product"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSave} className="space-y-3">
-          <div className="space-y-2">
-            <Label>Name</Label>
-            <Input
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="max-h-[70vh] overflow-y-auto">
+          <form onSubmit={onSave} className="space-y-3 pr-4">
             <div className="space-y-2">
-              <Label>Price (Ksh)</Label>
+              <Label>Name</Label>
               <Input
-                type="number"
-                inputMode="decimal"
-                min="1"
-                step="1"
-                value={form.price}
-                onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 required
               />
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Price (Ksh)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min="1"
+                  step="1"
+                  value={form.price}
+                  onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Stock</Label>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  value={form.stock}
+                  onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label>Stock</Label>
+              <Label>Reorder alert at</Label>
               <Input
                 type="number"
                 inputMode="numeric"
-                min="0"
-                value={form.stock}
-                onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))}
+                min="1"
+                value={form.reorder_level}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, reorder_level: e.target.value }))
+                }
                 required
               />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Reorder alert at</Label>
-            <Input
-              type="number"
-              inputMode="numeric"
-              min="1"
-              value={form.reorder_level}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, reorder_level: e.target.value }))
-              }
-              required
-            />
-          </div>
-          <DialogFooter className="gap-2">
+
+            {/* Barcode Manager - Only show when editing */}
             {editing && (
-              <Button type="button" variant="destructive" onClick={onDelete}>
-                <Trash2 className="h-4 w-4 mr-1" /> Delete
-              </Button>
+              <div className="border-t pt-4 mt-4">
+                <h3 className="font-semibold text-sm mb-3">Barcode</h3>
+                <ProductBarcodeManager productId={editing.id} />
+              </div>
             )}
-            <Button type="submit">{editing ? "Save changes" : "Add product"}</Button>
-          </DialogFooter>
-        </form>
+          </form>
+        </div>
+        <DialogFooter className="gap-2">
+          {editing && (
+            <Button type="button" variant="destructive" onClick={onDelete}>
+              <Trash2 className="h-4 w-4 mr-1" /> Delete
+            </Button>
+          )}
+          <Button type="submit" onClick={onSave}>{editing ? "Save changes" : "Add product"}</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
