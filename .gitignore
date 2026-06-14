@@ -33,3 +33,4 @@ bun.lock
 *.njsproj
 *.sln
 *.sw?
+.env
