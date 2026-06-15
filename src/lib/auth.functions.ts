@@ -9,6 +9,15 @@ const phoneSchema = z
   .trim()
   .regex(/^0\d{9}$/, "Phone must be 10 digits starting with 0");
 
+// Simple UUID v4 generator
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 const registerSchema = z.object({
   owner_name: z.string().trim().min(2).max(100),
   shop_name: z.string().trim().min(2).max(100),
@@ -87,6 +96,37 @@ export const registerShop = createServerFn({ method: "POST" })
     if (error || !shop) {
       console.error("[registerShop]", error);
       throw new Error("Failed to create shop. Please try again.");
+    }
+
+    // Create a user record for the shop owner
+    const userId = generateUUID();
+    
+    const { error: userError } = await supabaseAdmin
+      .from("users")
+      .insert({
+        id: userId,
+        email: `${data.phone}@shop.local`,
+      });
+    
+    if (userError) {
+      console.error("[registerShop] user creation failed", userError);
+      throw new Error("Failed to set up shop owner. Please try again.");
+    }
+
+    // Create shop_member entry with owner role
+    const { error: memberError } = await supabaseAdmin
+      .from("shop_members")
+      .insert({
+        shop_id: shop.id,
+        user_id: userId,
+        role: "owner",
+        status: "active",
+        accepted_at: now,
+      });
+    
+    if (memberError) {
+      console.error("[registerShop] shop member creation failed", memberError);
+      throw new Error("Failed to set up shop owner. Please try again.");
     }
 
     const token = await signShopJwt({ shop_id: shop.id, phone: shop.phone });
