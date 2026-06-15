@@ -33,4 +33,4 @@ bun.lock
 *.njsproj
 *.sln
 *.sw?
-.env
+.envnpm run deploy

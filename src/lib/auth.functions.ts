@@ -52,7 +52,7 @@ async function setSessionCookie(token: string) {
   });
 }
 
-const TRIAL_DAYS = Number(process.env.TRIAL_DAYS ?? 30);
+const TRIAL_DAYS = Number(process.env.TRIAL_DAYS ?? 14);
 
 export const registerShop = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => registerSchema.parse(d))

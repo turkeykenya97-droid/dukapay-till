@@ -72,7 +72,7 @@ export function computeSubscriptionStatus(
   
   // If trial_start is provided and we're still within TRIAL_DAYS of it, it's trial
   if (trialStart) {
-    const TRIAL_DAYS = Number(process.env.TRIAL_DAYS ?? 30);
+    const TRIAL_DAYS = Number(process.env.TRIAL_DAYS ?? 14);
     const trialStart_ms = new Date(trialStart).getTime();
     const trialEnd_ms = trialStart_ms + TRIAL_DAYS * 24 * 60 * 60 * 1000;
     
