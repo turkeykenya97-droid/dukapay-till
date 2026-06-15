@@ -179,17 +179,26 @@ export const getUserRoleInShop = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const session = await requireSession();
 
-    const { data: role, error } = await supabaseAdmin
-      .rpc("get_user_shop_role", {
-        p_shop_id: data.shop_id,
-      });
+    // If session shop_id matches requested shop_id, user is owner of that shop
+    if (session.shop_id === data.shop_id) {
+      return "owner" as UserRole;
+    }
+
+    // Fallback: check shop_members table for multi-shop scenarios (future feature)
+    const { data: member, error } = await supabaseAdmin
+      .from("shop_members")
+      .select("role, status")
+      .eq("shop_id", data.shop_id)
+      .eq("status", "active")
+      .maybeSingle();
 
     if (error) {
-      console.error("[getUserRoleInShop]", error);
+      console.error("[getUserRoleInShop] query failed", error);
       throw new Error("Failed to get user role");
     }
 
-    return role as UserRole | null;
+    // Return role if member exists and is active, otherwise null
+    return member?.role ? (member.role as UserRole) : null;
   });
 
 // ============================================================================
@@ -204,17 +213,29 @@ export const isShopOwner = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const session = await requireSession();
 
-    const { data: result, error } = await supabaseAdmin
-      .rpc("is_shop_owner", {
-        p_shop_id: data.shop_id,
-      });
+    // A user is owner of a shop if their session's shop_id matches the requested shop_id
+    // Sessions are created only for authenticated shop owners during signup/login
+    // If the shop_id in the JWT matches the requested shop_id, the user is the owner
+    if (session.shop_id === data.shop_id) {
+      return true;
+    }
+
+    // Fallback: check shop_members table for multi-shop scenarios (future feature)
+    // This would be used if staff could manage multiple shops
+    const { data: member, error } = await supabaseAdmin
+      .from("shop_members")
+      .select("role, status")
+      .eq("shop_id", data.shop_id)
+      .eq("role", "owner")
+      .eq("status", "active")
+      .maybeSingle();
 
     if (error) {
-      console.error("[isShopOwner]", error);
+      console.error("[isShopOwner] query failed", error);
       throw new Error("Failed to check owner status");
     }
 
-    return result as boolean;
+    return !!member;
   });
 
 // ============================================================================
@@ -229,11 +250,8 @@ export const getShopMembers = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const session = await requireSession();
 
-    // Verify user is owner
-    const { data: isOwner, error: ownerError } = await supabaseAdmin
-      .rpc("is_shop_owner", { p_shop_id: data.shop_id });
-
-    if (ownerError || !isOwner) {
+    // Verify user is owner - check if session's shop_id matches requested shop_id
+    if (session.shop_id !== data.shop_id) {
       throw new Error("Only shop owners can view members");
     }
 
@@ -285,11 +303,8 @@ export const getShopInvitations = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const session = await requireSession();
 
-    // Verify user is owner
-    const { data: isOwner, error: ownerError } = await supabaseAdmin
-      .rpc("is_shop_owner", { p_shop_id: data.shop_id });
-
-    if (ownerError || !isOwner) {
+    // Verify user is owner - check if session's shop_id matches requested shop_id
+    if (session.shop_id !== data.shop_id) {
       throw new Error("Only shop owners can view invitations");
     }
 
@@ -330,11 +345,8 @@ export const revokeShopInvitation = createServerFn({ method: "POST" })
       throw new Error("Invitation not found");
     }
 
-    // Verify user is owner
-    const { data: isOwner, error: ownerError } = await supabaseAdmin
-      .rpc("is_shop_owner", { p_shop_id: invitation.shop_id });
-
-    if (ownerError || !isOwner) {
+    // Verify user is owner - check if session's shop_id matches invitation's shop_id
+    if (session.shop_id !== invitation.shop_id) {
       throw new Error("Only shop owners can revoke invitations");
     }
 
@@ -379,11 +391,8 @@ export const removeShopMember = createServerFn({ method: "POST" })
       throw new Error("Cannot remove shop owner");
     }
 
-    // Verify user is owner
-    const { data: isOwner, error: ownerError } = await supabaseAdmin
-      .rpc("is_shop_owner", { p_shop_id: member.shop_id });
-
-    if (ownerError || !isOwner) {
+    // Verify user is owner - check if session's shop_id matches member's shop_id
+    if (session.shop_id !== member.shop_id) {
       throw new Error("Only shop owners can remove members");
     }
 
