@@ -432,7 +432,7 @@ function SellPage() {
     <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-72 lg:pb-6">
       <h1 className="text-2xl font-bold mb-4">New sale</h1>
 
-      <div className="flex gap-2 mb-4 bg-muted p-1 rounded-xl w-fit">
+      <div className="flex gap-2 mb-4 bg-muted p-1 rounded-xl overflow-x-auto">
         {tabs.map((t) => {
           const Icon = t.icon;
           const active = tab === t.id;
@@ -440,7 +440,7 @@ function SellPage() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${
                 active
                   ? "bg-primary text-primary-foreground shadow"
                   : "text-muted-foreground hover:text-foreground"

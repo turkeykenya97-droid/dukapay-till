@@ -59,7 +59,7 @@ function ProductsPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-4">
+    <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-24 lg:pb-6">
       <header className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Products</h1>
         <Button

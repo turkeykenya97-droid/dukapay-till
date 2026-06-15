@@ -169,7 +169,7 @@ function ProfilePage() {
   const currentPlanObj = plansData.plans.find((p) => p.id === profile.plan);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 lg:px-8 pt-6 pb-4">
+    <div className="max-w-4xl mx-auto px-4 lg:px-8 pt-6 pb-24 lg:pb-6">
       <h1 className="text-2xl font-bold mb-6">Account Profile</h1>
 
       {/* Account Status */}

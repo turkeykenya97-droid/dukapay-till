@@ -74,7 +74,7 @@ function AnalyticsContent() {
   ].filter((x) => x.value > 0);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-6 pb-4 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-6 pb-24 lg:pb-6 space-y-6">
       <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
 
       {/* Key Metrics - Row 1 */}

@@ -48,9 +48,9 @@ function HistoryPage() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-4">
+    <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-24 lg:pb-6">
       <h1 className="text-2xl font-bold mb-4">Sales history</h1>
-      <div className="flex gap-1 mb-4 bg-muted p-1 rounded-xl">
+      <div className="flex gap-1 mb-4 bg-muted p-1 rounded-xl flex-wrap">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -58,7 +58,7 @@ function HistoryPage() {
               setFilter(t.id);
               setPage(1);
             }}
-            className={`flex-1 text-sm py-1.5 rounded-lg transition ${
+            className={`flex-1 min-w-max text-xs sm:text-sm py-1.5 px-2 sm:px-3 rounded-lg transition ${
               filter === t.id
                 ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground"

@@ -38,7 +38,7 @@ function DashboardPage() {
   const expired = data.shop.subscription_status === "expired";
 
   return (
-    <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-4">
+    <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-24 lg:pb-6">
       <header className="flex items-start justify-between mb-6">
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Welcome back</p>

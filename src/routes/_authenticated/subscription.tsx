@@ -112,7 +112,7 @@ function SubscriptionContent() {
   const isPro = profile.plan === "pro";
 
   return (
-    <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-4">
+    <div className="max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-24 lg:pb-6">
       <h1 className="text-3xl font-bold mb-2">Subscription Plans</h1>
       <p className="text-muted-foreground mb-8">
         {isTrialActive
