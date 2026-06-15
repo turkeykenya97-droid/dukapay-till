@@ -24,6 +24,7 @@
     "SMARTPAY_CALLBACK_URL": "https://jiannamercy/api/public/webhooks/smartpay",
     "SUBSCRIPTION_AMOUNT": "499",
     "TRIAL_DAYS": "14",
+    "JWT_SECRET": "5193959333d404cc0e74a1d413fd8be1396849523dc6d6bd06ac9771de141576",
     "ADMIN_JWT_SECRET": "kX9mN2pQ7wL5jB8sD3hF1gE4vC6rT0uY9aW2mK7nP5qL8sJ3dF6hG9jK2mN5pR8t"
   }
 }
