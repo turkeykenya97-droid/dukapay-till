@@ -156,7 +156,7 @@ export const getUserShops = createServerFn({ method: "GET" }).handler(
     const session = await requireSession();
 
     const { data, error } = await supabaseAdmin
-      .rpc("get_user_shops");
+      .rpc("get_user_shops", { p_user_id: session.user_id });
 
     if (error) {
       console.error("[getUserShops]", error);

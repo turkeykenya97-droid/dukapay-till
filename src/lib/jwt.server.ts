@@ -9,6 +9,7 @@ function getSecret(): Uint8Array {
 
 export interface ShopJwtPayload {
   shop_id: string;
+  user_id: string;
   phone: string;
 }
 

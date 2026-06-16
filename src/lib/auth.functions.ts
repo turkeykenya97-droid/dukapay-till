@@ -129,7 +129,11 @@ export const registerShop = createServerFn({ method: "POST" })
       throw new Error("Failed to set up shop owner. Please try again.");
     }
 
-    const token = await signShopJwt({ shop_id: shop.id, phone: shop.phone });
+    const token = await signShopJwt({ 
+      shop_id: shop.id, 
+      user_id: userId,
+      phone: shop.phone 
+    });
     await setSessionCookie(token);
     return { shop_id: shop.id };
   });
@@ -152,7 +156,25 @@ export const loginShop = createServerFn({ method: "POST" })
     const ok = await bcrypt.compare(data.password, shop.password_hash);
     if (!ok) throw new Error("Invalid phone or password");
 
-    const token = await signShopJwt({ shop_id: shop.id, phone: shop.phone });
+    // Get the owner's user_id from shop_members
+    const { data: shopMember, error: memberError } = await supabaseAdmin
+      .from("shop_members")
+      .select("user_id")
+      .eq("shop_id", shop.id)
+      .eq("role", "owner")
+      .eq("status", "active")
+      .single();
+    
+    if (memberError || !shopMember) {
+      console.error("[loginShop] shop member lookup failed", memberError);
+      throw new Error("Login failed. Please try again.");
+    }
+
+    const token = await signShopJwt({ 
+      shop_id: shop.id, 
+      user_id: shopMember.user_id,
+      phone: shop.phone 
+    });
     await setSessionCookie(token);
     
     const { hasPaymentChannel } = await import("./session.server");
