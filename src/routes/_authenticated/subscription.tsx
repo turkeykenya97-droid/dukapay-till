@@ -26,7 +26,8 @@ import {
 const profileQuery = queryOptions({
   queryKey: ["profile"],
   queryFn: () => getProfile(),
-  staleTime: 30 * 1000,
+  staleTime: 0,
+  gcTime: 5 * 60 * 1000,
 });
 
 const plansQuery = queryOptions({
@@ -87,11 +88,12 @@ function SubscriptionContent() {
 
   const renewalMutation = useMutation({
     mutationFn: (plan: "basic" | "pro") => renew({ data: { plan } }),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("M-Pesa prompt sent. Approve on your phone.");
       setSelectedPlan(null);
       setShowBasicWarning(false);
-      qc.invalidateQueries({ queryKey: ["profile"] });
+      // Force immediate refetch of fresh profile data
+      await qc.refetchQueries({ queryKey: ["profile"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
